@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(mavros_tutorial)
+project(first_challenge)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -118,7 +118,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mavros_tutorial
+#  LIBRARIES first_challenge 
 #  CATKIN_DEPENDS common_msgs mavros_msgs roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -137,7 +137,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/mavros_tutorial.cpp
+#   src/${PROJECT_NAME}/first_challenge.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -148,13 +148,13 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/mavros_tutorial_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/first_challenge_node.cpp)
 add_executable(
-  offboard_example src/offboard_example.cpp
+  first_challenge_movement src/first_challenge_movement.cpp
 )
 
 
-target_link_libraries(offboard_example ${catkin_LIBRARIES})
+target_link_libraries(first_challenge_movement ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -171,9 +171,9 @@ target_link_libraries(offboard_example ${catkin_LIBRARIES})
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(offboard_imaging src/offboard_imaging.cpp)
+add_executable(first_challenge_imaging src/first_challenge_imaging.cpp)
 target_link_libraries(
-  offboard_imaging 
+  first_challenge_imaging 
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
 )

@@ -1,6 +1,7 @@
-/* @author: MAVROS, edited by Stewart Nash
- * @file: offboard_example.cpp
- * @brief: Offboard control example node, written with MAVROS version 0.19.x, PX4 Pro Flight
+/*
+ * @author: MAVROS, edited by Stewart Nash
+ * @file: first_challenge_movement.cpp
+ * @brief: First challenge quadcopter control node, written with MAVROS version 0.19.x, PX4 Pro Flight
  * Stack and tested in Gazebo SITL
  */
 

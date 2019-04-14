@@ -1,3 +1,9 @@
+/*
+ * Author: Aerobotics (Stewart Nash)
+ * File: first_challenge_imaging.cpp
+ * Description: Displays image from iris quadcopter cameras
+ *
+ */
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <ros/ros.h>
@@ -6,7 +12,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 
-static const std::string WINDOW_NAME = "Offboard Imaging";
+static const std::string WINDOW_NAME = "first_challenge bottom";
 int frameNumber;
 
 void rawImageCallback(const sensor_msgs::ImageConstPtr& msg) {
@@ -31,7 +37,7 @@ void rawImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 }
 
 int main(int argc, char *argv[]) {
-	ros::init(argc, argv, "offboard_imaging_node");
+	ros::init(argc, argv, "first_challenge_imaging_node");
 	ros::NodeHandle nodeHandle;
 	ros::Subscriber subscriber;
 	image_transport::ImageTransport imageTransport(nodeHandle);
@@ -42,7 +48,7 @@ int main(int argc, char *argv[]) {
 	cv::Mat frame;
 
 	frameNumber = 0;
-	imageSubscriber = imageTransport.subscribe("image_raw", 1, &rawImageCallback);
+	imageSubscriber = imageTransport.subscribe("/iris_1/camera_down/image_raw", 1, &rawImageCallback);
 	//imagePublisher = imageTransport.advertise("/image_converter/output_video", 1);
 
 	//subscriber = nodeHandle.subscribe<sensor_msgs::Image>("image_raw", 32, &rawImageCallback);

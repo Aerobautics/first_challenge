@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mavros_tutorial</name>
-  <version>1.1.0</version>
-  <description>Package containing custom implementation of mavros offboard tutorial example</description>
+  <name>first_challenge</name>
+  <version>1.0.0</version>
+  <description>Package containing custom routines for AI Battle Drone competitions first challenge</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
