@@ -13,9 +13,14 @@
 #include <sensor_msgs/image_encodings.h>
 
 static const std::string WINDOW_NAME = "first_challenge bottom";
+static const std::string BOTTOM_WINDOW_NAME = "bottom camera";
+static const std::string FRONT_WINDOW_NAME = "front camera";
+static const int SD_WIDTH = 858;
+static const int SD_HEIGHT = 480;
+
 int frameNumber;
 
-void rawImageCallback(const sensor_msgs::ImageConstPtr& msg) {
+void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	cv_bridge::CvImagePtr cvImagePtr;
 
 	try {
@@ -24,7 +29,8 @@ void rawImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		ROS_ERROR("cv_bridge exception: %s", e.what());
 		return;
 	}
-	cv::imshow(WINDOW_NAME, cvImagePtr->image);
+	cv::imshow(BOTTOM_WINDOW_NAME, cvImagePtr->image);
+	/*
 	frameNumber++;
 	if (frameNumber % 300) {
 		std::cout << "frame number: " << frameNumber << std::endl;
@@ -33,6 +39,20 @@ void rawImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		std::cout << "resetting frame number to 0" << std::endl;
 		frameNumber = 0;
 	}
+	*/
+	cv::waitKey(3);
+}
+
+void frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
+	cv_bridge::CvImagePtr cvImagePtr;
+
+	try {
+		cvImagePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+	} catch(cv_bridge::Exception& e) {
+		ROS_ERROR("cv_bridge exception: %s", e.what());
+		return;
+	}
+	cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);
 	cv::waitKey(3);
 }
 
@@ -40,21 +60,27 @@ int main(int argc, char *argv[]) {
 	ros::init(argc, argv, "first_challenge_imaging_node");
 	ros::NodeHandle nodeHandle;
 	ros::Subscriber subscriber;
-	image_transport::ImageTransport imageTransport(nodeHandle);
-	image_transport::Subscriber imageSubscriber;
+	image_transport::ImageTransport bottomImageTransport(nodeHandle);
+	image_transport::ImageTransport frontImageTransport(nodeHandle);
+	image_transport::Subscriber bottomImageSubscriber;
+	image_transport::Subscriber frontImageSubscriber;
 	image_transport::Publisher imagePublisher;
-	cv::namedWindow(WINDOW_NAME, cv::WINDOW_AUTOSIZE);
+	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
+	cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::VideoCapture capture;
 	cv::Mat frame;
 
+	cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
+	cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
 	frameNumber = 0;
-	imageSubscriber = imageTransport.subscribe("/iris_1/camera_down/image_raw", 1, &rawImageCallback);
+	bottomImageSubscriber = bottomImageTransport.subscribe("/iris_1/camera_down/image_raw", 1, &bottomImageCallback);
+	frontImageSubscriber = frontImageTransport.subscribe("/iris_1/camera_forward/image_raw", 1, &frontImageCallback);
 	//imagePublisher = imageTransport.advertise("/image_converter/output_video", 1);
 
 	//subscriber = nodeHandle.subscribe<sensor_msgs::Image>("image_raw", 32, &rawImageCallback);
 	
 	ros::spin();
-	cv::destroyWindow(WINDOW_NAME);
+	cv::destroyWindow(BOTTOM_WINDOW_NAME);
 	
 	return 0;
 }
