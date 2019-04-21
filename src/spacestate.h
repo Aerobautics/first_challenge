@@ -6,16 +6,22 @@
  * file.)
  */
 #include <cmath>
+#include <vector>
 
-const int WORLD_WIDTH = static_cast<int>(30/0.15); // x-dimension
-const int WORLD_LENGTH = static_cast<int>(18/0.15); // y-dimension
+const int WORLD_WIDTH = static_cast<int>((30 + 0.15) / 0.15); // x-dimension
+const int WORLD_LENGTH = static_cast<int>((18 + 0.15) / 0.15); // y-dimension
 const int WORLD_HEIGHT = 1; // z-dimension
+const double X_OFFSET = static_cast<int>(-15.0);
+const double Y_OFFSET = static_cast<int>(-11.0);
 const double SPACE_FACTOR = 0.15; // conversion from world space grid to coordinates
 enum SpaceState {UNKNOWN, SEARCHED, FORBIDDEN, CURRENT};
 SpaceState worldSpace[WORLD_WIDTH][WORLD_LENGTH];
 
-const unsigned long DWELL_TIME = 200;
+const unsigned long DWELL_TIME = 25;
 const unsigned long PAUSE_TIME = 500;
+
+const int NUMBER_OF_WALLS_SS = 7;
+std::vector<double> forbiddenPoints[NUMBER_OF_WALLS_SS];
 
 inline int convertLocation(double location);
 double distance(int x1, int y1, int x2, int y2);
@@ -25,6 +31,22 @@ void updateSpace(double xLocation, double yLocation);
 
 inline int convertLocation(double location) {
 	return static_cast<int>(location / SPACE_FACTOR);
+}
+
+inline int xConvertPoint(double xLocation) {
+	return static_cast<int>((xLocation - X_OFFSET) / SPACE_FACTOR);
+}
+
+inline int yConvertPoint(double yLocation) {
+	return static_cast<int>((yLocation - Y_OFFSET) / SPACE_FACTOR);
+}
+
+inline double xConvertCell(int xCell) {
+	return static_cast<double>(xCell) * SPACE_FACTOR + X_OFFSET;
+}
+
+inline double yConvertCell(int yCell) {
+	return static_cast<double>(yCell) * SPACE_FACTOR + Y_OFFSET;
 }
 
 double distance(int x1, int y1, int x2, int y2) {
@@ -39,22 +61,35 @@ double distance(int x1, int y1, int x2, int y2) {
 void initializeSpace(double xLocation, double yLocation) {
         int i, j;
         int x, y;
-
+	int count;
+	
         for (i = 0; i < WORLD_WIDTH; i++) {
                 for (j = 0; j < WORLD_LENGTH; j++) {
-                        worldSpace[i][j] = SpaceState::UNKNOWN;
+                        worldSpace[i][j] = UNKNOWN;
                 }
         }
 
         for (i = 0; i < WORLD_WIDTH; i++) {
                 for (j = 0; j < WORLD_LENGTH; j++) {
-                        x = convertLocation(xLocation);
-                        y = convertLocation(yLocation);
+                        x = xConvertPoint(xLocation);
+                        y = yConvertPoint(yLocation);
                         if (distance(x, y, i, j) < 1.0) {
-                                worldSpace[i][j] = SpaceState::CURRENT;
+                                worldSpace[i][j] = CURRENT;
                         }
                 }
         }
+
+	for (j = 0; j < NUMBER_OF_WALLS_SS; j++) {
+		count = (forbiddenPoints[j]).size() / 2;
+		for (i = 0; i < count; i++) {
+			x = xConvertPoint((forbiddenPoints[j])[2 * i]);
+			y = yConvertPoint((forbiddenPoints[j])[2 * i + 1]);
+			//x = xConvertPoint((forbiddenPoints[j]).at(2 * i));
+			//y = yConvertPoint((forbiddenPoints[j]).at(2 * i + 1));
+			worldSpace[x][y] = FORBIDDEN;
+		} 
+	}
+
 }
 
 bool moveTo(double &xLocation, double &yLocation, unsigned long elapsedTime) {
@@ -64,8 +99,8 @@ bool moveTo(double &xLocation, double &yLocation, unsigned long elapsedTime) {
         double temporary = 1000000.00;
 	double temporary_x, temporary_y;
 
-        x = convertLocation(xLocation);
-        y = convertLocation(yLocation);
+        x = xConvertPoint(xLocation);
+        y = yConvertPoint(yLocation);
         if (elapsedTime < DWELL_TIME) {
                 output = false;
         } else {
@@ -73,9 +108,9 @@ bool moveTo(double &xLocation, double &yLocation, unsigned long elapsedTime) {
                 for (i = 0; i < WORLD_WIDTH; i++) {
                         for (j = 0; j < WORLD_LENGTH; j++) {
                                 if (distance(x, y, i, j) < temporary) {
-                                        if (worldSpace[i][j] == SpaceState::UNKNOWN) {
-                                                temporary_x = static_cast<double>(i) * SPACE_FACTOR;
-                                                temporary_y = static_cast<double>(j) * SPACE_FACTOR;
+                                        if (worldSpace[i][j] == UNKNOWN) {
+						temporary_x = xConvertCell(i);
+						temporary_y = yConvertCell(j);
                                                 temporary = distance(x, y, i, j);
                                         }
                                 }
@@ -83,7 +118,6 @@ bool moveTo(double &xLocation, double &yLocation, unsigned long elapsedTime) {
                 }
 		xLocation = temporary_x;
 		yLocation = temporary_y;
-                std::cout << "moveTo: (" << temporary_x << ", " << temporary_y << ")" << std::endl;
         }
 
         return output;
@@ -96,18 +130,18 @@ void updateSpace(double xLocation, double yLocation) {
 
         for (i = 0; i < WORLD_WIDTH; i++) {
                 for (j = 0; j < WORLD_LENGTH; j++) {
-                        if (worldSpace[i][j] == SpaceState::CURRENT) {
-                                worldSpace[i][j] == SpaceState::SEARCHED;
+                        if (worldSpace[i][j] == CURRENT) {
+                                worldSpace[i][j] = SEARCHED;
                         }
                 }
         }
 
         for (i = 0; i < WORLD_WIDTH; i++) {
                 for (j = 0; j < WORLD_LENGTH; j++) {
-                        x = convertLocation(xLocation);
-                        y = convertLocation(yLocation);
+                        x = xConvertPoint(xLocation);
+                        y = yConvertPoint(yLocation);
                         if (distance(x, y, i, j) < 1.0) {
-                                worldSpace[i][j] = SpaceState::CURRENT;
+                                worldSpace[i][j] = CURRENT;
                         }
                 }
         }
