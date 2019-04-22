@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
 	bottomImageSubscriber = bottomImageTransport.subscribe("/iris_1/camera_down/image_raw", 1, &bottomImageCallback);
 	frontImageSubscriber = frontImageTransport.subscribe("/iris_1/camera_forward/image_raw", 1, &frontImageCallback);
 	//imagePublisher = imageTransport.advertise("/image_converter/output_video", 1);
-
 	//subscriber = nodeHandle.subscribe<sensor_msgs::Image>("image_raw", 32, &rawImageCallback);
 	
 	ros::spin();

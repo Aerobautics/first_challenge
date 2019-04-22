@@ -8,6 +8,7 @@ add_compile_options(-std=c++11)
 #Enable C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+#set (OpenCV_DIR /usr/share/OpenCV)
 set(OpenCV_DIR /usr/local/lib/cmake/opencv4)
 
 
@@ -153,7 +154,6 @@ add_executable(
   first_challenge_movement src/first_challenge_movement.cpp
 )
 
-
 target_link_libraries(first_challenge_movement ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
@@ -172,12 +172,20 @@ target_link_libraries(first_challenge_movement ${catkin_LIBRARIES})
 # )
 
 add_executable(first_challenge_imaging src/first_challenge_imaging.cpp)
+
 target_link_libraries(
   first_challenge_imaging 
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
 )
 
+add_executable(first_challenge_integrated src/first_challenge_integrated.cpp)
+
+target_link_libraries(
+  first_challenge_integrated
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+)
 #############
 ## Install ##
 #############

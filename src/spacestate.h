@@ -8,12 +8,12 @@
 #include <cmath>
 #include <vector>
 
-const int WORLD_WIDTH = static_cast<int>((30 + 0.15) / 0.15); // x-dimension
-const int WORLD_LENGTH = static_cast<int>((18 + 0.15) / 0.15); // y-dimension
+const int WORLD_WIDTH = static_cast<int>((30 + 0.30) / 0.30); // x-dimension
+const int WORLD_LENGTH = static_cast<int>((18 + 0.30) / 0.30); // y-dimension
 const int WORLD_HEIGHT = 1; // z-dimension
 const double X_OFFSET = static_cast<int>(-15.0);
 const double Y_OFFSET = static_cast<int>(-11.0);
-const double SPACE_FACTOR = 0.15; // conversion from world space grid to coordinates
+const double SPACE_FACTOR = 0.30; // conversion from world space grid to coordinates
 enum SpaceState {UNKNOWN, SEARCHED, FORBIDDEN, CURRENT};
 SpaceState worldSpace[WORLD_WIDTH][WORLD_LENGTH];
 
@@ -80,6 +80,7 @@ void initializeSpace(double xLocation, double yLocation) {
         }
 
 	for (j = 0; j < NUMBER_OF_WALLS_SS; j++) {
+		//std::cout << std::endl << "Wall " << j << std::endl;
 		count = (forbiddenPoints[j]).size() / 2;
 		for (i = 0; i < count; i++) {
 			x = xConvertPoint((forbiddenPoints[j])[2 * i]);
@@ -87,8 +88,13 @@ void initializeSpace(double xLocation, double yLocation) {
 			//x = xConvertPoint((forbiddenPoints[j]).at(2 * i));
 			//y = yConvertPoint((forbiddenPoints[j]).at(2 * i + 1));
 			worldSpace[x][y] = FORBIDDEN;
+			//std::cout << "(" << x << ", " << y << ") ";
+			//if (i > 0 && i % 4 == 0) {
+			//	std::cout << std::endl;
+			//}
 		} 
 	}
+	std::cout << "Done.";
 
 }
 

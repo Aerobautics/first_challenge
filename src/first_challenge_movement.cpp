@@ -34,7 +34,7 @@ void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) {
 int main(int argc, char **argv)
 {
 	isPoseAcquired = false;
-	ros::init(argc, argv, "first_challenge_node");
+	ros::init(argc, argv, "first_challenge_movement_node");
 	ros::NodeHandle nh;
 
 	ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, &state_cb);
