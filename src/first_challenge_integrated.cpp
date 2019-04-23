@@ -30,6 +30,8 @@ static const std::string FRONT_WINDOW_NAME = "front camera";
 
 static const int SD_WIDTH = 858;
 static const int SD_HEIGHT = 480;
+static const int X_OFFSET = 10;
+static const int Y_OFFSET = -9;
 
 enum ImageState {NONE_FOUND, OBSERVE, TARGET, FORCE_OFF};
 bool isTargeting = false;
@@ -110,6 +112,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
 	std::cout << current_pose.pose.position.y << ")" << std::endl;
+	/*
 	pose.pose.position.x = current_pose.pose.position.x; // 0?
 	pose.pose.position.y = current_pose.pose.position.y; // 0?
 	pose.pose.position.z = current_pose.pose.position.z; // 2?
@@ -117,7 +120,14 @@ int main(int argc, char* argv[])
 	pose.pose.orientation.y = current_pose.pose.orientation.y; // 0?
 	pose.pose.orientation.z = current_pose.pose.orientation.z; // -0.99?
 	pose.pose.orientation.w = -current_pose.pose.orientation.w; // -0.04?
-	
+	*/
+	pose.pose.position.x = 0; // 0?
+	pose.pose.position.y = 0; // 0?
+	pose.pose.position.z = 2; // 2?
+	pose.pose.orientation.x = 0; // 0?
+	pose.pose.orientation.y = 0; // 0?
+	pose.pose.orientation.z = -0.99; // -0.99?
+	pose.pose.orientation.w = -0.04; // -0.04?
 	pose.pose.position.z = 2;		
 	// Send a few setpoints before starting
 	for(int i = 100; ros::ok() && i > 0; --i){
@@ -129,11 +139,10 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < NUMBER_OF_WALLS; i++) {
 		forbiddenPoints[i] = getPoints(i);
 	}
-	initializeSpace(pose.pose.position.x, pose.pose.position.y);
+	initializeSpace(pose.pose.position.x + X_OFFSET, pose.pose.position.y + Y_OFFSET);
 
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
-	initializeSpace(pose.pose.position.x, pose.pose.position.y);
 	first_challenge_set_mode.request.custom_mode = "OFFBOARD";
 	// Switch to Offboard mode, arm quadcopter, send service calls every 5 seconds
 	mavros_msgs::CommandBool arm_cmd;
@@ -166,14 +175,14 @@ int main(int argc, char* argv[])
  			pose_y = pose.pose.position.y;
 		}
 		*/
-		pose_x = current_pose.pose.position.x;
-		pose_y = current_pose.pose.position.y;		
+		pose_x = current_pose.pose.position.x + X_OFFSET;
+		pose_y = current_pose.pose.position.y + Y_OFFSET;		
 		updateSpace(pose_x, pose_y);	
 		if (moveTo(pose_x, pose_y, elapsedTime)) {
-			pose.pose.position.x = pose_x;
-			pose.pose.position.y = pose_y;
-			std::cout << "moveTo: (" << pose.pose.position.x << ", ";
-			std::cout << pose.pose.position.y;
+			pose.pose.position.x = pose_x - X_OFFSET;
+			pose.pose.position.y = pose_y - Y_OFFSET;
+			std::cout << "moveTo: (" << pose.pose.position.x + X_OFFSET;
+			std::cout << ", " << pose.pose.position.y + Y_OFFSET;
 			std::cout << ", " << pose.pose.position.z << ")" << std::endl;
 		} else {
 
@@ -217,16 +226,6 @@ void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		return;
 	}
 	cv::imshow(BOTTOM_WINDOW_NAME, cvImagePtr->image);
-	/*
-	frameNumber++;
-	if (frameNumber % 300) {
-		std::cout << "frame number: " << frameNumber << std::endl;
-	}
-	if (frameNumber > 300000) {
-		std::cout << "resetting frame number to 0" << std::endl;
-		frameNumber = 0;
-	}
-	*/
 	cvImagePtr->image.copyTo(frame);
 	cv::waitKey(3);
 }

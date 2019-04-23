@@ -11,13 +11,13 @@
 const int WORLD_WIDTH = static_cast<int>((30 + 0.30) / 0.30); // x-dimension
 const int WORLD_LENGTH = static_cast<int>((18 + 0.30) / 0.30); // y-dimension
 const int WORLD_HEIGHT = 1; // z-dimension
-const double X_OFFSET = static_cast<int>(-15.0);
-const double Y_OFFSET = static_cast<int>(-11.0);
+const double X_BUFFER = static_cast<int>(-15.0);
+const double Y_BUFFER = static_cast<int>(-11.0);
 const double SPACE_FACTOR = 0.30; // conversion from world space grid to coordinates
 enum SpaceState {UNKNOWN, SEARCHED, FORBIDDEN, CURRENT};
 SpaceState worldSpace[WORLD_WIDTH][WORLD_LENGTH];
 
-const unsigned long DWELL_TIME = 25;
+const unsigned long DWELL_TIME = 75;
 const unsigned long PAUSE_TIME = 500;
 
 const int NUMBER_OF_WALLS_SS = 7;
@@ -34,19 +34,19 @@ inline int convertLocation(double location) {
 }
 
 inline int xConvertPoint(double xLocation) {
-	return static_cast<int>((xLocation - X_OFFSET) / SPACE_FACTOR);
+	return static_cast<int>((xLocation - X_BUFFER) / SPACE_FACTOR);
 }
 
 inline int yConvertPoint(double yLocation) {
-	return static_cast<int>((yLocation - Y_OFFSET) / SPACE_FACTOR);
+	return static_cast<int>((yLocation - Y_BUFFER) / SPACE_FACTOR);
 }
 
 inline double xConvertCell(int xCell) {
-	return static_cast<double>(xCell) * SPACE_FACTOR + X_OFFSET;
+	return static_cast<double>(xCell) * SPACE_FACTOR + X_BUFFER;
 }
 
 inline double yConvertCell(int yCell) {
-	return static_cast<double>(yCell) * SPACE_FACTOR + Y_OFFSET;
+	return static_cast<double>(yCell) * SPACE_FACTOR + Y_BUFFER;
 }
 
 double distance(int x1, int y1, int x2, int y2) {
@@ -73,7 +73,7 @@ void initializeSpace(double xLocation, double yLocation) {
                 for (j = 0; j < WORLD_LENGTH; j++) {
                         x = xConvertPoint(xLocation);
                         y = yConvertPoint(yLocation);
-                        if (distance(x, y, i, j) < 1.0) {
+                        if (distance(x, y, i, j) < 1.0001) {
                                 worldSpace[i][j] = CURRENT;
                         }
                 }
@@ -94,8 +94,22 @@ void initializeSpace(double xLocation, double yLocation) {
 			//}
 		} 
 	}
-	std::cout << "Done.";
-
+	// Insert buffer zone
+	for (j = 0; j < NUMBER_OF_WALLS_SS; j++) {
+		count = (forbiddenPoints[j]).size() / 2;
+		for (i = 0; i < count; i++) {
+			x = xConvertPoint((forbiddenPoints[j])[2 * i]);
+			y = yConvertPoint((forbiddenPoints[j])[2 * i + 1]);
+			// Buffer zone
+			for (int m = 0; m < WORLD_WIDTH; m++) {
+				for (int n = 0; n < WORLD_LENGTH; n++) {
+					if (distance(x, y, i, j) < sqrt(2.001)) {
+						worldSpace[m][n] = FORBIDDEN;
+					}					
+				}
+			}
+		} 
+	}
 }
 
 bool moveTo(double &xLocation, double &yLocation, unsigned long elapsedTime) {
