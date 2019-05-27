@@ -37,6 +37,9 @@ static const int FHD_HEIGHT = 1080;
 static const int X_OFFSET = 10;
 static const int Y_OFFSET = -9;
 
+static const double X_SCALE = 0.85;
+static const double Y_SCALE = 0.85;
+
 int video_width = HD_WIDTH;
 int video_height = HD_HEIGHT;
 bool isVideoInitialized = false;
@@ -303,8 +306,6 @@ void method_waypoint(int argc, char* argv[])
 
 	bottomImageSubscriber = bottomImageTransport.subscribe("/iris_1/camera_down/image_raw", 1, &bottomImageCallback);
 	frontImageSubscriber = frontImageTransport.subscribe("/iris_1/camera_forward/image_raw", 1, &frontImageCallback);
-	//imagePublisher = imageTransport.advertise("/image_converter/output_video", 1);
-	//subscriber = nodeHandle.subscribe<sensor_msgs::Image>("image_raw", 32, &rawImageCallback);
 
 	cv::VideoCapture capture;
 	
@@ -328,12 +329,6 @@ void method_waypoint(int argc, char* argv[])
 
 	}
 
-	//image = cv::imread(FILE_NAME);
-	//if (!image.data) {
-	//	printf("No image data \n");
-	//	return -1;
-	//}
-
 	cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
@@ -342,20 +337,10 @@ void method_waypoint(int argc, char* argv[])
 	cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
 	cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);
 	cv::resizeWindow("Search Space", SD_WIDTH, SD_HEIGHT);
-	//cv::resizeWindow(PROCESSING_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	//cv::resizeWindow(SEARCH_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
 
 	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
 	std::cout << current_pose.pose.position.y << ")" << std::endl;
-	/*
-	pose.pose.position.x = current_pose.pose.position.x; // 0?
-	pose.pose.position.y = current_pose.pose.position.y; // 0?
-	pose.pose.position.z = current_pose.pose.position.z; // 2?
-	pose.pose.orientation.x = current_pose.pose.orientation.x; // 0?
-	pose.pose.orientation.y = current_pose.pose.orientation.y; // 0?
-	pose.pose.orientation.z = current_pose.pose.orientation.z; // -0.99?
-	pose.pose.orientation.w = -current_pose.pose.orientation.w; // -0.04?
-	*/
+
 	pose.pose.position.x = 0; // 0?
 	pose.pose.position.y = 0; // 0?
 	pose.pose.position.z = 2; // 2?
@@ -374,7 +359,7 @@ void method_waypoint(int argc, char* argv[])
 	for (int i = 0; i < NUMBER_OF_WALLS; i++) {
 		forbiddenPoints[i] = getPoints(i);
 	}
-	initializeSpace(pose.pose.position.x + X_OFFSET, pose.pose.position.y + Y_OFFSET);
+	initializeSpace(pose.pose.position.x / X_SCALE + X_OFFSET, pose.pose.position.y / Y_SCALE + Y_OFFSET);
 
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
@@ -401,24 +386,16 @@ void method_waypoint(int argc, char* argv[])
 			}
 		}
 
-		++elapsedTime;
-		/*
-		if (isPoseAcquired) {
-			pose_x = current_pose.pose.position.x;
-			pose_y = current_pose.pose.position.y;
-		} else {
-			pose_x = pose.pose.position.x;
- 			pose_y = pose.pose.position.y;
-		}
-		*/
-		pose_x = current_pose.pose.position.x + X_OFFSET;
-		pose_y = current_pose.pose.position.y + Y_OFFSET;		
+		pose_x = current_pose.pose.position.x / X_SCALE + X_OFFSET;
+		pose_y = current_pose.pose.position.y / Y_SCALE + Y_OFFSET;		
 		updateSpace(pose_x, pose_y);	
-		if (moveToWaypoint(pose_x, pose_y, elapsedTime)) {
+		if (newMoveToWaypoint(pose_x, pose_y, elapsedTime)) {
 			pose.pose.position.x = pose_x - X_OFFSET;
 			pose.pose.position.y = pose_y - Y_OFFSET;
-			std::cout << "moveTo: (" << pose.pose.position.x + X_OFFSET;
-			std::cout << ", " << pose.pose.position.y + Y_OFFSET;
+			pose.pose.position.x = X_SCALE * (pose_x - X_OFFSET);
+			pose.pose.position.y = Y_SCALE * (pose_y - Y_OFFSET);			
+			std::cout << "moveTo: (" << pose.pose.position.x / X_SCALE + X_OFFSET;
+			std::cout << ", " << pose.pose.position.y / Y_SCALE + Y_OFFSET;
 			std::cout << ", " << pose.pose.position.z << ")" << std::endl;
 			elapsedTime = 0;
 		} else {
@@ -427,10 +404,7 @@ void method_waypoint(int argc, char* argv[])
 		displaySpace();
 		processImage(frame);
 		isPoseAcquired = false;
-		//if (elapsedTime >= DWELL_TIME) {
-		//	elapsedTime = 0;
-		//	std::cout << "main: Restarting elapsedTime" << std::endl;
-		//}
+
 		local_pos_pub.publish(pose);
 		ros::spinOnce();
 		rate.sleep();
@@ -438,7 +412,6 @@ void method_waypoint(int argc, char* argv[])
 
 	cv::destroyWindow("Image Processing");
 	cv::destroyWindow("Search Space");
-	//cv::destroyWindow(PROCESSING_WINDOW_NAME);
-	//cv::destroyWindow(SEARCH_WINDOW_NAME);
+
 	video.release();
 }

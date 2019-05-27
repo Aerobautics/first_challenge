@@ -169,11 +169,83 @@ void updateSpace(double xLocation, double yLocation) {
 
 //----------------------------------Waypoint Code-----------------------------------------------
 const int WAYPOINT_NUMBER = 54;
-const unsigned long WAYPOINT_DWELL_TIME = 500;
+const unsigned long WAYPOINT_DWELL_TIME = 10;
+const unsigned long WAYPOINT_PAUSE_TIME = 250;
+const double POINTS_PER_DISTANCE = 5.0;
 bool isFirstPoint = true;
+bool isPathCreated = false;
 int currentWaypoint = 0;
+std::vector<double> travelPath[2];
+
+bool moveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedTime);
+int intermediatePoints(double x1, double y1, double x2, double y2);
+double waypointDistance(double x1, double y1, double x2, double y2);
+double waypointDistanceX(double x1, double x2);
+double waypointDistanceY(double y1, double y2);
+double waypointLength(double x1, double y1, double x2, double y2);
+double waypointLengthX(double x1, double y1, double x2, double y2);
+double waypointLengthY(double x1, double y1, double x2, double y2);
+void createTravelPath();
+bool newMoveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedTime);
 
 double waypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
+	{14,-10.5},
+	{9.3,-10.5},
+	{9.1,-0.5},
+	{-9.0,-0.5},
+	{-9.0,-2},
+	{8,-2},
+	{8 ,-3.5},
+	{-9,-3.5},
+	{-9,-5},
+	{8,-5},
+	{8,-10.5},
+	{6.5,-10.5},
+	{6.5, -6.5},
+	{5,-6.5},
+	{5,-10.5},
+	{3.5,-10.5},
+	{3.5,-6.5},
+	{2,-6.5},
+	{2,-10.5},
+	{0.5,-10.5},
+	{0.5,-6.5},
+	{-1,-6.5},
+	{-1,-10.5},
+	{-2.5,-10.5},
+	{-2.5,-6.5},
+	{-4,-6.5},
+	{-4,-10.5},
+	{-5.5,-10.5},
+	{-5.5,-6.5},
+	{-7,-6.5},
+	{-7,-10.5},
+	{-8.5,-6.5},
+	{-8.5,-10.5},
+	{-14.5,-10.5},
+	{-14.5,6},
+	{14.5,6},
+	{14.5,-9},
+	{13,-9},
+	{13,4.5},
+	{-13,4.5},
+	{-13,-9},
+	{-11,-9},
+	{-11,4.5},
+	{-9,4.5},
+	{-9,1},
+	{9,1},
+	{9,2.5},
+	{-8,2.5},
+	{-8,3.5},
+	{8,3.5},
+	{11,3.5},
+	{11,-9.5},
+	{12,-9.5},
+	{12,4}
+};
+
+double newWaypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
 	{14,-10.5},
 	{9.3,-10.5},
 	{9.1,-0.5},
@@ -233,7 +305,7 @@ double waypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
 bool moveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedTime) {
         bool output;
 
-        if (elapsedTime < WAYPOINT_DWELL_TIME) {
+        if (elapsedTime < WAYPOINT_PAUSE_TIME) {
                 output = false;
 		if (isFirstPoint) {
 			xLocation = waypoints[currentWaypoint][0];
@@ -249,6 +321,119 @@ bool moveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedT
 		}
 		xLocation = waypoints[currentWaypoint][0];
 		yLocation = waypoints[currentWaypoint][1];
+        }
+
+        return output;
+}
+
+int intermediatePoints(double x1, double y1, double x2, double y2) {
+	int output;
+
+	output = static_cast<int>(waypointDistance(x1, y1, x2, y2) * POINTS_PER_DISTANCE);
+
+	return output;
+}
+
+double waypointDistance(double x1, double y1, double x2, double y2) {
+	double output;
+
+	output = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+	output = sqrt(output);
+
+	return output;
+}
+
+double waypointDistanceX(double x1, double x2) {
+	double output;
+
+	output = (x1 - x2) * (x1 - x2);
+	output = sqrt(output);
+
+	return output;
+}
+
+double waypointDistanceY(double y1, double y2) {
+	return waypointDistanceX(y1, y2);
+}
+
+double waypointLength(double x1, double y1, double x2, double y2) {
+	double output;
+
+	output = waypointDistance(x1, y1, x2, y2) / static_cast<double>(intermediatePoints(x1, y1, x2, y2));
+
+	return output;
+}
+
+double waypointLengthX(double x1, double y1, double x2, double y2) {
+	double output;
+
+	output = waypointDistanceX(x1, x2) / static_cast<double>(intermediatePoints(x1, y1, x2, y2));
+	if (x2 < x1) {
+		output = output * -1;
+	}
+
+	return output;
+}
+
+double waypointLengthY(double x1, double y1, double x2, double y2) {
+	double output;
+
+	output = waypointDistanceY(y1, y2) / static_cast<double>(intermediatePoints(x1, y1, x2, y2));
+	if (y2 < y1) {
+		output = output * -1;
+	}
+
+	return output;
+}
+
+void createTravelPath() {
+	int i, j;
+	int pointCount;
+	double pointDistanceX;
+	double pointDistanceY;
+	double x1, x2, y1, y2;
+
+	for (i = 0; i < (WAYPOINT_NUMBER - 1); i++) {
+		x1 = newWaypoints[i][0];
+		y1 = newWaypoints[i][1];
+		x2 = newWaypoints[i + 1][0];
+		y2 = newWaypoints[i + 1][1];
+		pointCount = intermediatePoints(x1, y1, x2, y2);
+		pointDistanceX = waypointLengthX(x1, y1, x2, y2);
+		pointDistanceY = waypointLengthY(x1, y1, x2, y2);
+		for (j = 0; j < pointCount; j++) {
+			travelPath[0].push_back(newWaypoints[i][0] + j * pointDistanceX);
+			travelPath[1].push_back(newWaypoints[i][1] + j * pointDistanceY);
+		}
+	}
+	travelPath[0].push_back(newWaypoints[i][0]);
+	travelPath[1].push_back(newWaypoints[i][1]);
+}
+
+bool newMoveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedTime) {
+        bool output;
+
+	if (!isPathCreated) {
+		createTravelPath();
+		isPathCreated = true;
+	}
+
+        if (elapsedTime < WAYPOINT_DWELL_TIME) {
+                output = false;
+		if (isFirstPoint) {
+			xLocation = (travelPath[0])[currentWaypoint];
+			yLocation = (travelPath[1])[currentWaypoint];
+			isFirstPoint = false;
+		}
+        } else {
+                output = true;
+		if (currentWaypoint < travelPath[0].size()) {
+			++currentWaypoint;
+		} else { // Reset waypoint to restart search
+			currentWaypoint = 0;
+		}
+		xLocation = (travelPath[0])[currentWaypoint];
+		yLocation = (travelPath[1])[currentWaypoint];
         }
 
         return output;
