@@ -169,9 +169,10 @@ void updateSpace(double xLocation, double yLocation) {
 
 //----------------------------------Waypoint Code-----------------------------------------------
 const int WAYPOINT_NUMBER = 54;
-const unsigned long WAYPOINT_DWELL_TIME = 10;
+const int DELAY_NUMBER = 15;
+const unsigned long WAYPOINT_DWELL_TIME = 15;
 const unsigned long WAYPOINT_PAUSE_TIME = 250;
-const double POINTS_PER_DISTANCE = 5.0;
+const double POINTS_PER_DISTANCE = 3.0;
 bool isFirstPoint = true;
 bool isPathCreated = false;
 int currentWaypoint = 0;
@@ -388,11 +389,16 @@ double waypointLengthY(double x1, double y1, double x2, double y2) {
 
 void createTravelPath() {
 	int i, j;
+	int offset;
 	int pointCount;
 	double pointDistanceX;
 	double pointDistanceY;
 	double x1, x2, y1, y2;
 
+	for (i = 0; i < DELAY_NUMBER; i++) {
+		travelPath[0].push_back(newWaypoints[0][0]);
+		travelPath[1].push_back(newWaypoints[0][1]);
+	}
 	for (i = 0; i < (WAYPOINT_NUMBER - 1); i++) {
 		x1 = newWaypoints[i][0];
 		y1 = newWaypoints[i][1];
