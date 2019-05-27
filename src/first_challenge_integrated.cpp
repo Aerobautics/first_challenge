@@ -37,8 +37,8 @@ static const int FHD_HEIGHT = 1080;
 static const int X_OFFSET = 10;
 static const int Y_OFFSET = -9;
 
-static const double X_SCALE = 0.85;
-static const double Y_SCALE = 0.85;
+static const double X_SCALE = 1.00;
+static const double Y_SCALE = 1.00;
 
 int video_width = HD_WIDTH;
 int video_height = HD_HEIGHT;
@@ -329,13 +329,13 @@ void method_waypoint(int argc, char* argv[])
 
 	}
 
-	cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
+	//cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
 	cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);
+	//cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);
 	cv::resizeWindow("Search Space", SD_WIDTH, SD_HEIGHT);
 
 	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
@@ -402,7 +402,7 @@ void method_waypoint(int argc, char* argv[])
 			++elapsedTime;
 		}
 		displaySpace();
-		processImage(frame);
+		//processImage(frame);
 		isPoseAcquired = false;
 
 		local_pos_pub.publish(pose);
@@ -410,7 +410,7 @@ void method_waypoint(int argc, char* argv[])
 		rate.sleep();
 	}
 
-	cv::destroyWindow("Image Processing");
+	//cv::destroyWindow("Image Processing");
 	cv::destroyWindow("Search Space");
 
 	video.release();
