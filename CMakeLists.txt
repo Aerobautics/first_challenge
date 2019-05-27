@@ -8,8 +8,8 @@ add_compile_options(-std=c++11)
 #Enable C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-#set (OpenCV_DIR /usr/share/OpenCV)
-set(OpenCV_DIR /usr/local/lib/cmake/opencv4)
+set (OpenCV_DIR /usr/share/OpenCV)
+#set(OpenCV_DIR /usr/local/lib/cmake/opencv4)
 
 
 ## Find catkin macros and libraries

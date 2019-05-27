@@ -30,8 +30,16 @@ static const std::string FRONT_WINDOW_NAME = "front camera";
 
 static const int SD_WIDTH = 858;
 static const int SD_HEIGHT = 480;
+static const int HD_WIDTH = 1280;
+static const int HD_HEIGHT = 720;
+static const int FHD_WIDTH = 1920;
+static const int FHD_HEIGHT = 1080;
 static const int X_OFFSET = 10;
 static const int Y_OFFSET = -9;
+
+int video_width = HD_WIDTH;
+int video_height = HD_HEIGHT;
+bool isVideoInitialized = false;
 
 enum ImageState {NONE_FOUND, OBSERVE, TARGET, FORCE_OFF};
 bool isTargeting = false;
@@ -45,8 +53,10 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg);
 void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
 void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg);
 void frontImageCallback(const sensor_msgs::ImageConstPtr& msg);
+void saveVideo(cv::VideoWriter& output, cv::Mat& input);
 
 cv::Mat frame;
+cv::VideoWriter video;
 
 int main(int argc, char* argv[])
 {
@@ -150,6 +160,7 @@ int main(int argc, char* argv[])
 
 	ros::Time last_request = ros::Time::now();
 
+	video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height)); 
 	while(ros::ok()){
 		if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))) {
 			if( set_mode_client.call(first_challenge_set_mode) && first_challenge_set_mode.response.mode_sent) {
@@ -203,6 +214,7 @@ int main(int argc, char* argv[])
 	cv::destroyWindow("Search Space");
 	//cv::destroyWindow(PROCESSING_WINDOW_NAME);
 	//cv::destroyWindow(SEARCH_WINDOW_NAME);
+	video.release();
 
 	return 0;
 }
@@ -227,6 +239,14 @@ void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	}
 	cv::imshow(BOTTOM_WINDOW_NAME, cvImagePtr->image);
 	cvImagePtr->image.copyTo(frame);
+	if (!isVideoInitialized) {
+		cv::Size frameSize = frame.size();
+		video_width = frameSize.width;
+		video_height = frameSize.height;
+		isVideoInitialized = true;
+	} else {
+		saveVideo(video, frame);
+	}
 	cv::waitKey(3);
 }
 
@@ -241,4 +261,13 @@ void frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	}
 	cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);
 	cv::waitKey(3);
+}
+
+void saveVideo(cv::VideoWriter &output, cv::Mat& input) {
+	cv::Mat colorFrame;
+	cv::Mat temporary;
+
+	cv::cvtColor(input, temporary, cv::COLOR_BGR2GRAY);
+	cv::cvtColor(temporary, colorFrame, cv::COLOR_GRAY2BGR);		
+	output.write(colorFrame);
 }
