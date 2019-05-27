@@ -167,3 +167,90 @@ void updateSpace(double xLocation, double yLocation) {
         }
 }
 
+//----------------------------------Waypoint Code-----------------------------------------------
+const int WAYPOINT_NUMBER = 54;
+const unsigned long WAYPOINT_DWELL_TIME = 500;
+bool isFirstPoint = true;
+int currentWaypoint = 0;
+
+double waypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
+	{14,-10.5},
+	{9.3,-10.5},
+	{9.1,-0.5},
+	{-9.0,-0.5},
+	{-9.0,-2},
+	{8,-2},
+	{8 ,-3.5},
+	{-9,-3.5},
+	{-9,-5},
+	{8,-5},
+	{8,-10.5},
+	{6.5,-10.5},
+	{6.5, -6.5},
+	{5,-6.5},
+	{5,-10.5},
+	{3.5,-10.5},
+	{3.5,-6.5},
+	{2,-6.5},
+	{2,-10.5},
+	{0.5,-10.5},
+	{0.5,-6.5},
+	{-1,-6.5},
+	{-1,-10.5},
+	{-2.5,-10.5},
+	{-2.5,-6.5},
+	{-4,-6.5},
+	{-4,-10.5},
+	{-5.5,-10.5},
+	{-5.5,-6.5},
+	{-7,-6.5},
+	{-7,-10.5},
+	{-8.5,-6.5},
+	{-8.5,-10.5},
+	{-14.5,-10.5},
+	{-14.5,6},
+	{14.5,6},
+	{14.5,-9},
+	{13,-9},
+	{13,4.5},
+	{-13,4.5},
+	{-13,-9},
+	{-11,-9},
+	{-11,4.5},
+	{-9,4.5},
+	{-9,1},
+	{9,1},
+	{9,2.5},
+	{-8,2.5},
+	{-8,3.5},
+	{8,3.5},
+	{11,3.5},
+	{11,-9.5},
+	{12,-9.5},
+	{12,4}
+};
+
+bool moveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedTime) {
+        bool output;
+
+        if (elapsedTime < WAYPOINT_DWELL_TIME) {
+                output = false;
+		if (isFirstPoint) {
+			xLocation = waypoints[currentWaypoint][0];
+			yLocation = waypoints[currentWaypoint][1];
+			isFirstPoint = false;
+		}
+        } else {
+                output = true;
+		if (currentWaypoint < WAYPOINT_NUMBER) {
+			++currentWaypoint;
+		} else { // Reset waypoint to restart search
+			currentWaypoint = 0;
+		}
+		xLocation = waypoints[currentWaypoint][0];
+		yLocation = waypoints[currentWaypoint][1];
+        }
+
+        return output;
+}
+
