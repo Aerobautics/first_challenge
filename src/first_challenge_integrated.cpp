@@ -113,7 +113,7 @@ void frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		ROS_ERROR("cv_bridge exception: %s", e.what());
 		return;
 	}
-	cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);
+	//cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);
 	cv::waitKey(3);
 }
 
@@ -332,9 +332,9 @@ void method_waypoint(int argc, char* argv[])
 	//cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
+	//cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
+	//cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
 	//cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);
 	cv::resizeWindow("Search Space", SD_WIDTH, SD_HEIGHT);
 

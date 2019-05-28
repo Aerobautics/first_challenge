@@ -169,6 +169,7 @@ void updateSpace(double xLocation, double yLocation) {
 
 //----------------------------------Waypoint Code-----------------------------------------------
 const int WAYPOINT_NUMBER = 54;
+const int NEW_WAYPOINT_NUMBER = 55;
 const int DELAY_NUMBER = 15;
 const unsigned long WAYPOINT_DWELL_TIME = 15;
 const unsigned long WAYPOINT_PAUSE_TIME = 250;
@@ -246,8 +247,8 @@ double waypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
 	{12,4}
 };
 
-double newWaypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
-	{14,-10.0},
+double newWaypoints[NEW_WAYPOINT_NUMBER][2] = { // Size of 54x2
+	{13.5,-10.0},
 	{9.3,-10.0},
 	{8.9,-1.0},
 	{-8.5,-1.5},
@@ -300,7 +301,8 @@ double newWaypoints[WAYPOINT_NUMBER][2] = { // Size of 54x2
 	{11.5,4.0},
 	{11.5,-9.5},
 	{12.5,-9.5},
-	{12.5,4.5}
+	{12.5,4.5},
+	{13.5,-10.0}
 };
 
 bool moveToWaypoint(double &xLocation, double &yLocation, unsigned long elapsedTime) {
@@ -399,7 +401,7 @@ void createTravelPath() {
 		travelPath[0].push_back(newWaypoints[0][0]);
 		travelPath[1].push_back(newWaypoints[0][1]);
 	}
-	for (i = 0; i < (WAYPOINT_NUMBER - 1); i++) {
+	for (i = 0; i < (NEW_WAYPOINT_NUMBER - 1); i++) {
 		x1 = newWaypoints[i][0];
 		y1 = newWaypoints[i][1];
 		x2 = newWaypoints[i + 1][0];
