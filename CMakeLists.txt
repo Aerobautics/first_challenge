@@ -151,7 +151,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/first_challenge_node.cpp)
 add_executable(
-  first_challenge_movement src/first_challenge_movement.cpp
+	first_challenge_movement src/first_challenge_movement.cpp src/waypoint.cpp src/spacestate.cpp
 )
 
 target_link_libraries(first_challenge_movement ${catkin_LIBRARIES})
@@ -179,7 +179,7 @@ target_link_libraries(
   ${OpenCV_LIBS}
 )
 
-add_executable(first_challenge_integrated src/first_challenge_integrated.cpp)
+add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/waypoint.cpp src/spacestate.cpp)
 
 target_link_libraries(
   first_challenge_integrated

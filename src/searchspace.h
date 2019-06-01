@@ -3,6 +3,7 @@
  * Author: Aerobautics - Stewart Nash
  * Description: Visualizes drone search space
  */
+#pragma once
 #include <opencv2/opencv.hpp>
 #include "spacestate.h"
 

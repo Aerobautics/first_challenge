@@ -23,6 +23,8 @@
 #include "cellconversion.h"
 #include "processing.h"
 #include "searchspace.h"
+#include "spacestate.h"
+#include "waypoint.h"
 
 static const std::string WINDOW_NAME = "first_challenge bottom";
 static const std::string BOTTOM_WINDOW_NAME = "bottom camera";
