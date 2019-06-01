@@ -1,6 +1,6 @@
 /*
  * File: searchspace.h
- * Author: Aerobautics - Stewart Nash
+ * Author: Aerobotics (Stewart Nash)
  * Description: Visualizes drone search space
  */
 #pragma once

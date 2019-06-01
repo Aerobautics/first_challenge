@@ -290,6 +290,7 @@ void method_search(int argc, char* argv[])
 
 void method_waypoint(int argc, char* argv[])
 {
+	Waypoint waypoint;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
@@ -391,7 +392,7 @@ void method_waypoint(int argc, char* argv[])
 		pose_x = current_pose.pose.position.x / X_SCALE + X_OFFSET;
 		pose_y = current_pose.pose.position.y / Y_SCALE + Y_OFFSET;		
 		updateSpace(pose_x, pose_y);	
-		if (newMoveToWaypoint(pose_x, pose_y, elapsedTime)) {
+		if (waypoint.moveToWaypoint(pose_x, pose_y, elapsedTime)) {
 			pose.pose.position.x = pose_x - X_OFFSET;
 			pose.pose.position.y = pose_y - Y_OFFSET;
 			pose.pose.position.x = X_SCALE * (pose_x - X_OFFSET);

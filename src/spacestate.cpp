@@ -1,6 +1,6 @@
 /*
  * File: spacestate.cpp
- * Author: Stewart Nash
+ * Author: Aerobotics (Stewart Nash)
  * Date: May 31, 2019
  * Version: 0.0.0
  * Description: This contains the implementation of the space search
