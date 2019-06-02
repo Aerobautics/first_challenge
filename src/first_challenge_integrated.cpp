@@ -22,7 +22,6 @@
 //#include "spacestate.h"
 #include "cellconversion.h"
 #include "processing.h"
-#include "searchspace.h"
 #include "spacestate.h"
 #include "waypoint.h"
 
@@ -41,6 +40,8 @@ static const int Y_OFFSET = -9;
 
 static const double X_SCALE = 1.00;
 static const double Y_SCALE = 1.00;
+
+static const bool SAVE_VIDEO = false;
 
 int video_width = HD_WIDTH;
 int video_height = HD_HEIGHT;
@@ -101,7 +102,9 @@ void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		video_height = frameSize.height;
 		isVideoInitialized = true;
 	} else {
-		saveVideo(video, frame);
+		if (SAVE_VIDEO) {
+			saveVideo(video, frame);
+		}
 	}
 	cv::waitKey(3);
 }
@@ -128,8 +131,8 @@ void saveVideo(cv::VideoWriter &output, cv::Mat& input) {
 	output.write(colorFrame);
 }
 
-void method_search(int argc, char* argv[])
-{
+void method_search(int argc, char* argv[]) {
+	SpaceState spaceState;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
@@ -219,7 +222,7 @@ void method_search(int argc, char* argv[])
 	for (int i = 0; i < NUMBER_OF_WALLS; i++) {
 		forbiddenPoints[i] = getPoints(i);
 	}
-	initializeSpace(pose.pose.position.x + X_OFFSET, pose.pose.position.y + Y_OFFSET);
+	spaceState.initializeSpace(pose.pose.position.x + X_OFFSET, pose.pose.position.y + Y_OFFSET);
 
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
@@ -230,7 +233,10 @@ void method_search(int argc, char* argv[])
 
 	ros::Time last_request = ros::Time::now();
 
-	video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height)); 
+	if (SAVE_VIDEO) {
+		video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height)); 
+	}
+
 	while(ros::ok()){
 		if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))) {
 			if( set_mode_client.call(first_challenge_set_mode) && first_challenge_set_mode.response.mode_sent) {
@@ -258,8 +264,8 @@ void method_search(int argc, char* argv[])
 		*/
 		pose_x = current_pose.pose.position.x + X_OFFSET;
 		pose_y = current_pose.pose.position.y + Y_OFFSET;		
-		updateSpace(pose_x, pose_y);	
-		if (moveTo(pose_x, pose_y, elapsedTime)) {
+		spaceState.updateSpace(pose_x, pose_y);	
+		if (spaceState.moveTo(pose_x, pose_y, elapsedTime)) {
 			pose.pose.position.x = pose_x - X_OFFSET;
 			pose.pose.position.y = pose_y - Y_OFFSET;
 			std::cout << "moveTo: (" << pose.pose.position.x + X_OFFSET;
@@ -269,7 +275,7 @@ void method_search(int argc, char* argv[])
 		} else {
 
 		}
-		displaySpace();
+		spaceState.displaySpace();
 		processImage(frame);
 		isPoseAcquired = false;
 		//if (elapsedTime >= DWELL_TIME) {
@@ -285,12 +291,14 @@ void method_search(int argc, char* argv[])
 	cv::destroyWindow("Search Space");
 	//cv::destroyWindow(PROCESSING_WINDOW_NAME);
 	//cv::destroyWindow(SEARCH_WINDOW_NAME);
-	video.release();
+	if (SAVE_VIDEO) {
+		video.release();
+	}
 }
 
-void method_waypoint(int argc, char* argv[])
-{
+void method_waypoint(int argc, char* argv[]) {
 	Waypoint waypoint;
+	SpaceState spaceState;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
@@ -362,7 +370,7 @@ void method_waypoint(int argc, char* argv[])
 	for (int i = 0; i < NUMBER_OF_WALLS; i++) {
 		forbiddenPoints[i] = getPoints(i);
 	}
-	initializeSpace(pose.pose.position.x / X_SCALE + X_OFFSET, pose.pose.position.y / Y_SCALE + Y_OFFSET);
+	spaceState.initializeSpace(pose.pose.position.x / X_SCALE + X_OFFSET, pose.pose.position.y / Y_SCALE + Y_OFFSET);
 
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
@@ -373,7 +381,10 @@ void method_waypoint(int argc, char* argv[])
 
 	ros::Time last_request = ros::Time::now();
 
-	video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height)); 
+	if (SAVE_VIDEO) {
+		video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height));
+	}
+ 
 	while(ros::ok()){
 		if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))) {
 			if( set_mode_client.call(first_challenge_set_mode) && first_challenge_set_mode.response.mode_sent) {
@@ -391,7 +402,7 @@ void method_waypoint(int argc, char* argv[])
 
 		pose_x = current_pose.pose.position.x / X_SCALE + X_OFFSET;
 		pose_y = current_pose.pose.position.y / Y_SCALE + Y_OFFSET;		
-		updateSpace(pose_x, pose_y);	
+		spaceState.updateSpace(pose_x, pose_y);	
 		if (waypoint.moveToWaypoint(pose_x, pose_y, elapsedTime)) {
 			pose.pose.position.x = pose_x - X_OFFSET;
 			pose.pose.position.y = pose_y - Y_OFFSET;
@@ -404,7 +415,7 @@ void method_waypoint(int argc, char* argv[])
 		} else {
 			++elapsedTime;
 		}
-		displaySpace();
+		spaceState.displaySpace();
 		//processImage(frame);
 		isPoseAcquired = false;
 
@@ -416,5 +427,7 @@ void method_waypoint(int argc, char* argv[])
 	//cv::destroyWindow("Image Processing");
 	cv::destroyWindow("Search Space");
 
-	video.release();
+	if (SAVE_VIDEO) {
+		video.release();
+	}
 }

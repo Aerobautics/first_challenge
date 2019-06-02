@@ -33,6 +33,7 @@ void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) {
 
 int main(int argc, char **argv)
 {
+	SpaceState spaceState;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_movement_node");
 	ros::NodeHandle nh;
@@ -84,10 +85,10 @@ int main(int argc, char **argv)
 		forbiddenPoints[i] = getPoints(i);
 	}
 
-	initializeSpace(pose.pose.position.x, pose.pose.position.y);
+	spaceState.initializeSpace(pose.pose.position.x, pose.pose.position.y);
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
-	initializeSpace(pose.pose.position.x, pose.pose.position.y);
+	spaceState.initializeSpace(pose.pose.position.x, pose.pose.position.y);
 	first_challenge_set_mode.request.custom_mode = "OFFBOARD";
 	// Switch to Offboard mode, arm quadcopter, send service calls every 5 seconds
 	mavros_msgs::CommandBool arm_cmd;
@@ -122,8 +123,8 @@ int main(int argc, char **argv)
 		*/
 		pose_x = current_pose.pose.position.x;
 		pose_y = current_pose.pose.position.y;		
-		updateSpace(pose_x, pose_y);	
-		if (moveTo(pose_x, pose_y, elapsedTime)) {
+		spaceState.updateSpace(pose_x, pose_y);	
+		if (spaceState.moveTo(pose_x, pose_y, elapsedTime)) {
 			pose.pose.position.x = pose_x;
 			pose.pose.position.y = pose_y;
 			std::cout << "moveTo: (" << pose.pose.position.x << ", ";
