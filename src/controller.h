@@ -8,9 +8,24 @@
  * and mavros library which controls the drones movement. 
  */
 #pragma once
+#include <opencv2/opencv.hpp>
+#include <geometry_msgs/PoseStamped.h>
+#include <mavros_msgs/State.h>
+#include <sensor_msgs/Image.h>
 
-Class Controller {
+extern cv::Mat frame;
+extern cv::VideoWriter video;
+
+void state_cb(const mavros_msgs::State::ConstPtr& msg);
+void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg);
+void frontImageCallback(const sensor_msgs::ImageConstPtr& msg);
+void saveVideo(cv::VideoWriter& output, cv::Mat& input);
+
+class Controller {
 	public:
 		Controller(); // Constructor
+		void searchNavigation(int argc, char *argv[]);
+		void waypointNavigation(int argc, char *argv[]);
 };
 

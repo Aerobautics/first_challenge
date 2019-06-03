@@ -4,133 +4,26 @@
  * Description: Node for first drone challenge with integrated
  * computer vision and movement functions.
  */
-#include <ros/ros.h>
-
-#include <geometry_msgs/PoseStamped.h>
-#include <mavros_msgs/CommandBool.h>
-#include <mavros_msgs/SetMode.h>
-#include <mavros_msgs/State.h>
-
-#include <sensor_msgs/Image.h>
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <opencv2/opencv.hpp>
-
-#include <iostream>
+#include "controller.h"
 
 //#include "spacestate.h"
-#include "cellconversion.h"
-#include "processing.h"
-#include "spacestate.h"
-#include "waypoint.h"
-
-static const std::string WINDOW_NAME = "first_challenge bottom";
-static const std::string BOTTOM_WINDOW_NAME = "bottom camera";
-static const std::string FRONT_WINDOW_NAME = "front camera";
-
-static const int SD_WIDTH = 858;
-static const int SD_HEIGHT = 480;
-static const int HD_WIDTH = 1280;
-static const int HD_HEIGHT = 720;
-static const int FHD_WIDTH = 1920;
-static const int FHD_HEIGHT = 1080;
-static const int X_OFFSET = 10;
-static const int Y_OFFSET = -9;
-
-static const double X_SCALE = 1.00;
-static const double Y_SCALE = 1.00;
-
-static const bool SAVE_VIDEO = false;
-
-int video_width = HD_WIDTH;
-int video_height = HD_HEIGHT;
-bool isVideoInitialized = false;
-
-enum ImageState {NONE_FOUND, OBSERVE, TARGET, FORCE_OFF};
-bool isTargeting = false;
-bool isObserving = false;
-
-mavros_msgs::State current_state;
-geometry_msgs::PoseStamped current_pose;
-bool isPoseAcquired;
-
-void state_cb(const mavros_msgs::State::ConstPtr& msg);
-void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg);
-void frontImageCallback(const sensor_msgs::ImageConstPtr& msg);
-void saveVideo(cv::VideoWriter& output, cv::Mat& input);
 
 // Take functionality out of main for multiple methods of use.
-void method_search(int argc, char* argv[]);
-void method_waypoint(int argc, char* argv[]);
-
-
-cv::Mat frame;
-cv::VideoWriter video;
+//void method_search(int argc, char* argv[]);
+//void method_waypoint(int argc, char* argv[]);
 
 int main(int argc, char* argv[])
 {
+	Controller controller;
 	//method_search(argc, argv);
-	method_waypoint(argc, argv);
+	//method_waypoint(argc, argv);
+	
+	controller.waypointNavigation(argc, argv);
+
 	return 0;
 }
 
-void state_cb(const mavros_msgs::State::ConstPtr& msg) {
-	current_state = *msg;
-}
-
-void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) {
-	current_pose = *msg;
-	isPoseAcquired = true;
-}
-
-void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
-	cv_bridge::CvImagePtr cvImagePtr;
-
-	try {
-		cvImagePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-	} catch(cv_bridge::Exception& e) {
-		ROS_ERROR("cv_bridge exception: %s", e.what());
-		return;
-	}
-	cv::imshow(BOTTOM_WINDOW_NAME, cvImagePtr->image);
-	cvImagePtr->image.copyTo(frame);
-	if (!isVideoInitialized) {
-		cv::Size frameSize = frame.size();
-		video_width = frameSize.width;
-		video_height = frameSize.height;
-		isVideoInitialized = true;
-	} else {
-		if (SAVE_VIDEO) {
-			saveVideo(video, frame);
-		}
-	}
-	cv::waitKey(3);
-}
-
-void frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
-	cv_bridge::CvImagePtr cvImagePtr;
-
-	try {
-		cvImagePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-	} catch(cv_bridge::Exception& e) {
-		ROS_ERROR("cv_bridge exception: %s", e.what());
-		return;
-	}
-	//cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);
-	cv::waitKey(3);
-}
-
-void saveVideo(cv::VideoWriter &output, cv::Mat& input) {
-	cv::Mat colorFrame;
-	cv::Mat temporary;
-
-	cv::cvtColor(input, temporary, cv::COLOR_BGR2GRAY);
-	cv::cvtColor(temporary, colorFrame, cv::COLOR_GRAY2BGR);		
-	output.write(colorFrame);
-}
-
+/*
 void method_search(int argc, char* argv[]) {
 	SpaceState spaceState;
 	isPoseAcquired = false;
@@ -195,15 +88,15 @@ void method_search(int argc, char* argv[]) {
 
 	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
 	std::cout << current_pose.pose.position.y << ")" << std::endl;
-	/*
-	pose.pose.position.x = current_pose.pose.position.x; // 0?
-	pose.pose.position.y = current_pose.pose.position.y; // 0?
-	pose.pose.position.z = current_pose.pose.position.z; // 2?
-	pose.pose.orientation.x = current_pose.pose.orientation.x; // 0?
-	pose.pose.orientation.y = current_pose.pose.orientation.y; // 0?
-	pose.pose.orientation.z = current_pose.pose.orientation.z; // -0.99?
-	pose.pose.orientation.w = -current_pose.pose.orientation.w; // -0.04?
-	*/
+	
+	//pose.pose.position.x = current_pose.pose.position.x; // 0?
+	//pose.pose.position.y = current_pose.pose.position.y; // 0?
+	//pose.pose.position.z = current_pose.pose.position.z; // 2?
+	//pose.pose.orientation.x = current_pose.pose.orientation.x; // 0?
+	//pose.pose.orientation.y = current_pose.pose.orientation.y; // 0?
+	//pose.pose.orientation.z = current_pose.pose.orientation.z; // -0.99?
+	//pose.pose.orientation.w = -current_pose.pose.orientation.w; // -0.04?
+	
 	pose.pose.position.x = 0; // 0?
 	pose.pose.position.y = 0; // 0?
 	pose.pose.position.z = 2; // 2?
@@ -253,15 +146,15 @@ void method_search(int argc, char* argv[]) {
 		}
 
 		++elapsedTime;
-		/*
-		if (isPoseAcquired) {
-			pose_x = current_pose.pose.position.x;
-			pose_y = current_pose.pose.position.y;
-		} else {
-			pose_x = pose.pose.position.x;
- 			pose_y = pose.pose.position.y;
-		}
-		*/
+		
+		//if (isPoseAcquired) {
+		//	pose_x = current_pose.pose.position.x;
+		//	pose_y = current_pose.pose.position.y;
+		//} else {
+		//	pose_x = pose.pose.position.x;
+ 		//	pose_y = pose.pose.position.y;
+		//}
+		
 		pose_x = current_pose.pose.position.x + X_OFFSET;
 		pose_y = current_pose.pose.position.y + Y_OFFSET;		
 		spaceState.updateSpace(pose_x, pose_y);	
@@ -295,7 +188,9 @@ void method_search(int argc, char* argv[]) {
 		video.release();
 	}
 }
+*/
 
+/*
 void method_waypoint(int argc, char* argv[]) {
 	Waypoint waypoint;
 	SpaceState spaceState;
@@ -431,3 +326,4 @@ void method_waypoint(int argc, char* argv[]) {
 		video.release();
 	}
 }
+*/
