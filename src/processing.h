@@ -1,22 +1,12 @@
 /*
  * File: processing.h
- * Author: Aerobautics - Stewart Nash
+ * Author: Aerobotics (Stewart Nash)
  * Description: Image processing for first challenge.
  */
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-static const std::string PROCESSING_WINDOW_NAME = "Image Processing";
 
-void displayProcessing(const std::string windowName, cv::Mat input) {
-	cv::imshow(windowName, input);
-	cv::waitKey(3);
-}
-
-void displayProcessing(cv::Mat input) {
-	displayProcessing("Image Processing", input);
-	//displayProcessing(PROCESSING_WINDOW_NAME, input);
-}
 
 cv::Mat processImage(cv::Mat input) {
 	cv::Mat grayscale;
@@ -50,7 +40,6 @@ cv::Mat processImage(cv::Mat input) {
 			cv::drawContours(output, contours, j, cv::Scalar(0, 0, 255), 2, 8);
 		}
 	}
-	displayProcessing(output);
 
 	return output;
 }

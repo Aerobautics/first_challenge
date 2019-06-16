@@ -179,7 +179,7 @@ target_link_libraries(
   ${OpenCV_LIBS}
 )
 
-add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/waypoint.cpp src/spacestate.cpp src/controller.cpp)
+add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/waypoint.cpp src/spacestate.cpp src/controller.cpp src/sightseeing.cpp)
 
 target_link_libraries(
   first_challenge_integrated

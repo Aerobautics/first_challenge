@@ -25,9 +25,9 @@
 #include <iostream>
 
 #include "cellconversion.h"
-#include "processing.h"
 #include "spacestate.h"
 #include "waypoint.h"
+#include "sightseeing.h"
 
 static const std::string WINDOW_NAME = "first_challenge bottom";
 static const std::string BOTTOM_WINDOW_NAME = "bottom camera";
@@ -68,6 +68,8 @@ Controller::Controller() {
 }
 
 void Controller::searchNavigation(int argc, char *argv[]) {
+	Sightseeing soothsayer;
+
 	SpaceState spaceState;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
@@ -212,7 +214,8 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 
 		}
 		spaceState.displaySpace();
-		processImage(frame);
+		//processImage(frame);
+		soothsayer.findTags(frame);
 		isPoseAcquired = false;
 		//if (elapsedTime >= DWELL_TIME) {
 		//	elapsedTime = 0;
@@ -235,6 +238,7 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 void Controller::waypointNavigation(int argc, char *argv[]) {
 	Waypoint waypoint;
 	SpaceState spaceState;
+	Sightseeing soothsayer;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
@@ -353,6 +357,7 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 		}
 		spaceState.displaySpace();
 		//processImage(frame);
+		//soothsayer.findTags(frame);
 		isPoseAcquired = false;
 
 		local_pos_pub.publish(pose);

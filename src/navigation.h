@@ -9,9 +9,16 @@
  * 'searchspace'.
  */
 #pragma once
+#include <vector>
 
 Class Navigation {
 	public:
 		Navigation(); // Constructor
+		bool isIgnoringTag;
+		bool isTargetingTag;
+		std::vector<double> nextPoint();
+		std::vector<double> identifiedTags;
+		std::vector<double> reportedTags;
+		
 };
 
