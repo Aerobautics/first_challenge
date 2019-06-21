@@ -30,6 +30,7 @@ class Sightseeing {
 		void setProcessingType(ImageProcessor input);
 		ImageProcessor getProcessingType();
 		std::vector<int> getImageSize();
+		void trackingPrototype(cv::Mat inputQuery, cv::Mat inputFrame); // Output relevant data when complete
 
 	private:
 		cv::Mat currentImage;
