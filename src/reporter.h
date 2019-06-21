@@ -8,9 +8,23 @@
  * April-tags. 
  */
 #pragma once
+#include <vector>
 
 class Reporter {
 	public:
 		Reporter(); // Constructor
+		bool isComplete();
+		bool addTag(unsigned int input);
+		bool addTag(unsigned int input, double coordinateX, double coordinateY);
+		std::vector<unsigned int> getTags();
+		std::vector<double> getXCoordinates();
+		std::vector<double> getYCoordinates();
+		void resetTags();
+		const int MAXIMUM_TAGS = 6;
+
+	private:
+		std::vector<unsigned int> tagList;
+		std::vector<double> xCoordinates;
+		std::vector<double> yCoordinates;
 };
 

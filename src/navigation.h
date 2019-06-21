@@ -10,15 +10,34 @@
  */
 #pragma once
 #include <vector>
+#include "reporter.h"
+#include "spacestate.h"
+#include "waypoint.h"
 
-Class Navigation {
+enum NavigationMethod {WAYPOINT_NAVIGATION, SEARCH_NAVIGATION};
+
+class Navigation {
 	public:
 		Navigation(); // Constructor
+		Navigation(double poseX, double poseY, double offsetX, double offsetY);
 		bool isIgnoringTag;
 		bool isTargetingTag;
 		std::vector<double> nextPoint();
-		std::vector<double> identifiedTags;
-		std::vector<double> reportedTags;
+		Reporter identifiedTags;
+		Reporter reportedTags;
+		double xOffset;
+		double yOffset;
+		double xScale;
+		double yScale;
+		double xPose;
+		double yPose;
+		bool update(double& poseX, double& poseY, unsigned long elapsedTime);
+		bool update(double& poseX, double& poseY, double xPosition, double yPosition, unsigned long elapsedTime);
+		NavigationMethod navigationMethod;
+
+	private:
+		SpaceState spaceState;
+		Waypoint waypoint;
 		
 };
 

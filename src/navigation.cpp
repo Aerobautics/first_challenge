@@ -9,7 +9,95 @@
  * 'searchspace'.
  */
 #include "navigation.h"
+#include "cellconversion.h"
+#include <iostream>
 
 Navigation::Navigation() {
+	xOffset = 10;
+	yOffset = -9;
+	xScale = 1.00;
+	yScale = 1.00;
+	xPose = 0;
+	yPose = 0;
+	// Initialize spacestate values
+	for (int i = 0; i < NUMBER_OF_WALLS; i++) {
+		forbiddenPoints[i] = getPoints(i);
+	}
+	spaceState.initializeSpace(xPose + xOffset, yPose + yOffset);
+	navigationMethod = WAYPOINT_NAVIGATION;	
+}
 
+Navigation::Navigation(double poseX, double poseY, double offsetX, double offsetY) {
+	xOffset = offsetX;
+	yOffset = offsetY;
+	xScale = 1.00;
+	yScale = 1.00;
+	xPose = poseX;
+	yPose = poseY;
+	// Initialize spacestate values
+	for (int i = 0; i < NUMBER_OF_WALLS; i++) {
+		forbiddenPoints[i] = getPoints(i);
+	}
+	spaceState.initializeSpace(xPose + xOffset, yPose + yOffset);	
+}
+
+
+bool Navigation::update(double& poseX, double& poseY, unsigned long elapsedTime) {
+	bool output;
+	double xPosition, yPosition;
+
+	xPosition = poseX;
+	yPosition = poseY;
+
+	return update(poseX, poseY, xPosition, yPosition, elapsedTime);
+}
+
+bool Navigation::update(double& poseX, double& poseY, double xPosition, double yPosition, unsigned long elapsedTime) {
+	bool output;
+
+	poseX = xPosition / xScale + xOffset;
+	poseY = yPosition / yScale + yOffset;		
+	spaceState.updateSpace(poseX, poseY);
+	if (navigationMethod == WAYPOINT_NAVIGATION) {
+		if (waypoint.moveToWaypoint(poseX, poseY, elapsedTime)) {
+			//xPosition = poseX - xOffset;
+			//yPosition = poseY - yOffset;
+			xPosition = xScale * (poseX - xOffset);
+			yPosition = yScale * (poseY - yOffset);			
+			std::cout << "moveTo: (" << xPosition / xScale + xOffset;
+			std::cout << ", " << yPosition / yScale + yOffset << ")" << std::endl;
+			poseX = xPosition;
+			poseY = yPosition;
+			output = true;
+		} else { // output = waypoint.moveToWaypoint(poseX, poseY, elapsedTime);
+			output = false;
+		}
+	} else if (navigationMethod == SEARCH_NAVIGATION) {
+		if (spaceState.moveTo(poseX, poseY, elapsedTime)) {
+			xPosition = poseX - xOffset;
+			yPosition = poseY - yOffset;
+			std::cout << "moveTo: (" << xPosition + xOffset;
+			std::cout << ", " << yPosition + yOffset << ")" << std::endl;
+			output = true;
+		} else { // output = spaceState.moveTo(poseX, poseY, elapsedTime);
+			output = false;
+		}
+	} else {
+		if (waypoint.moveToWaypoint(poseX, poseY, elapsedTime)) {
+			//xPosition = poseX - xOffset;
+			//yPosition = poseY - yOffset;
+			xPosition = xScale * (poseX - xOffset);
+			yPosition = yScale * (poseY - yOffset);			
+			std::cout << "moveTo: (" << xPosition / xScale + xOffset;
+			std::cout << ", " << yPosition / yScale + yOffset << ")" << std::endl;
+			poseX = xPosition;
+			poseY = yPosition;
+			output = true;
+		} else { // output = waypoint.moveToWaypoint(poseX, poseY, elapsedTime);
+			output = false;
+		}
+	}	
+
+	spaceState.displaySpace();
+	return output;
 }

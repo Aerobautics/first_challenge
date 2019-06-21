@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   sensor_msgs
   image_transport
+  apriltag_ros
   OpenCV REQUIRED
 )
 
@@ -179,7 +180,8 @@ target_link_libraries(
   ${OpenCV_LIBS}
 )
 
-add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/waypoint.cpp src/spacestate.cpp src/controller.cpp src/sightseeing.cpp)
+#add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/waypoint.cpp src/spacestate.cpp src/controller.cpp src/sightseeing.cpp)
+add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/navigation.cpp src/controller.cpp src/sightseeing.cpp src/waypoint.cpp src/reporter.cpp src/spacestate.cpp)
 
 target_link_libraries(
   first_challenge_integrated
