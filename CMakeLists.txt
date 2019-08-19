@@ -181,7 +181,15 @@ target_link_libraries(
 )
 
 #add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/waypoint.cpp src/spacestate.cpp src/controller.cpp src/sightseeing.cpp)
-add_executable(first_challenge_integrated src/first_challenge_integrated.cpp src/navigation.cpp src/controller.cpp src/sightseeing.cpp src/waypoint.cpp src/reporter.cpp src/spacestate.cpp)
+add_executable(first_challenge_integrated 
+ src/first_challenge_integrated.cpp
+ src/navigation.cpp
+ src/controller.cpp
+ src/sightseeing.cpp
+ src/waypoint.cpp
+ src/reporter.cpp
+ src/spacestate.cpp
+ src/foundtag.cpp)
 
 target_link_libraries(
   first_challenge_integrated

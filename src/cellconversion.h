@@ -4,6 +4,11 @@
  * Description: Converts wall locations to grid coordinates for
  * statespace.h. Code should be extended and made more flexible.
  */
+#pragma once
+
+#ifndef CELLCONVERSION_H
+#define CELLCONVERSION_H
+
 #include <cmath>
 #include <vector>
 
@@ -120,3 +125,5 @@ std::vector<int> getCells() {
 
 	return output;
 }
+
+#endif // CELLCONVERSION_H

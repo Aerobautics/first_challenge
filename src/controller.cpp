@@ -16,8 +16,6 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 
-#include <apriltag_ros/AprilTagDetectionArray.h>
-
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
@@ -26,9 +24,15 @@
 
 #include <iostream>
 
+//#include "cellconversion.h"
+#include "navigation.h"
+#include "spacestate.h"
 #include "waypoint.h"
 #include "sightseeing.h"
-#include "navigation.h"
+
+// Remove the following variables
+// Found in cellconversion.h
+static const int NUMBER_OF_WALLS_STATIC  = 7;
 
 static const std::string WINDOW_NAME = "first_challenge bottom";
 static const std::string BOTTOM_WINDOW_NAME = "bottom camera";
@@ -52,12 +56,13 @@ int video_width = HD_WIDTH;
 int video_height = HD_HEIGHT;
 bool isVideoInitialized = false;
 
+enum ImageState {NONE_FOUND, OBSERVE, TARGET, FORCE_OFF};
+bool isTargeting = false;
+bool isObserving = false;
+
 mavros_msgs::State current_state;
 geometry_msgs::PoseStamped current_pose;
-apriltag_ros::AprilTagDetectionArray current_tag;
 bool isPoseAcquired;
-bool isSearchComplete = false;
-Navigation navigation;
 
 
 cv::Mat frame;
@@ -70,13 +75,13 @@ Controller::Controller() {
 void Controller::searchNavigation(int argc, char *argv[]) {
 	Sightseeing soothsayer;
 
+	SpaceState spaceState;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
 
 	ros::Subscriber state_sub = nodeHandle.subscribe<mavros_msgs::State>("/mavros/state", 10, &state_cb);
 	ros::Subscriber local_pos_sub = nodeHandle.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, &local_pos_cb);
-	ros::Subscriber apriltag_sub = nodeHandle.subscribe<apriltag_ros::AprilTagDetectionArray>("apriltag_ros/AprilTagDetectionArray", 10, &apriltag_cb);
 	ros::Publisher local_pos_pub = nodeHandle.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
 	ros::ServiceClient arming_client = nodeHandle.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
 	ros::ServiceClient set_mode_client = nodeHandle.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
@@ -114,6 +119,12 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 
 	}
 
+	//image = cv::imread(FILE_NAME);
+	//if (!image.data) {
+	//	printf("No image data \n");
+	//	return -1;
+	//}
+
 	cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
 	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
@@ -127,7 +138,15 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 
 	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
 	std::cout << current_pose.pose.position.y << ")" << std::endl;
-
+	/*
+	pose.pose.position.x = current_pose.pose.position.x; // 0?
+	pose.pose.position.y = current_pose.pose.position.y; // 0?
+	pose.pose.position.z = current_pose.pose.position.z; // 2?
+	pose.pose.orientation.x = current_pose.pose.orientation.x; // 0?
+	pose.pose.orientation.y = current_pose.pose.orientation.y; // 0?
+	pose.pose.orientation.z = current_pose.pose.orientation.z; // -0.99?
+	pose.pose.orientation.w = -current_pose.pose.orientation.w; // -0.04?
+	*/
 	pose.pose.position.x = 0; // 0?
 	pose.pose.position.y = 0; // 0?
 	pose.pose.position.z = 2; // 2?
@@ -142,6 +161,11 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 		ros::spinOnce();
 		rate.sleep();
 	}
+	// Initialize spacestate values -> move this to header
+	for (int i = 0; i < NUMBER_OF_WALLS_STATIC; i++) {
+		forbiddenPoints[i] = navigationGetPoints(i);
+	}
+	spaceState.initializeSpace(pose.pose.position.x + X_OFFSET, pose.pose.position.y + Y_OFFSET);
 
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
@@ -156,7 +180,6 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 		video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height)); 
 	}
 
-	navigation.navigationMethod = SEARCH_NAVIGATION;
 	while(ros::ok()){
 		if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))) {
 			if( set_mode_client.call(first_challenge_set_mode) && first_challenge_set_mode.response.mode_sent) {
@@ -172,15 +195,21 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 			}
 		}
 
-		pose_x = current_pose.pose.position.x;
-		pose_y = current_pose.pose.position.y;	
-		if (navigation.update(pose_x, pose_y, elapsedTime)) {
-			pose.pose.position.x = pose_x;
-			pose.pose.position.y = pose_y;
+		++elapsedTime;
+		pose_x = current_pose.pose.position.x + X_OFFSET;
+		pose_y = current_pose.pose.position.y + Y_OFFSET;		
+		spaceState.updateSpace(pose_x, pose_y);	
+		if (spaceState.moveTo(pose_x, pose_y, elapsedTime)) {
+			pose.pose.position.x = pose_x - X_OFFSET;
+			pose.pose.position.y = pose_y - Y_OFFSET;
+			std::cout << "moveTo: (" << pose.pose.position.x + X_OFFSET;
+			std::cout << ", " << pose.pose.position.y + Y_OFFSET;
+			std::cout << ", " << pose.pose.position.z << ")" << std::endl;
 			elapsedTime = 0;
 		} else {
-			++elapsedTime;
+
 		}
+		spaceState.displaySpace();
 		//processImage(frame);
 		soothsayer.findTags(frame);
 		isPoseAcquired = false;
@@ -203,6 +232,8 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 }
 
 void Controller::waypointNavigation(int argc, char *argv[]) {
+	Waypoint waypoint;
+	SpaceState spaceState;
 	Sightseeing soothsayer;
 	isPoseAcquired = false;
 	ros::init(argc, argv, "first_challenge_node");
@@ -271,6 +302,11 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 		ros::spinOnce();
 		rate.sleep();
 	}
+	// Initialize spacestate values -> move this to header
+	for (int i = 0; i < NUMBER_OF_WALLS_STATIC; i++) {
+		forbiddenPoints[i] = navigationGetPoints(i);
+	}
+	spaceState.initializeSpace(pose.pose.position.x / X_SCALE + X_OFFSET, pose.pose.position.y / Y_SCALE + Y_OFFSET);
 
 	// Set custom mode to OFFBOARD
 	mavros_msgs::SetMode first_challenge_set_mode;
@@ -285,7 +321,6 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 		video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height));
 	}
  
-	navigation.navigationMethod = WAYPOINT_NAVIGATION;
 	while(ros::ok()){
 		if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))) {
 			if( set_mode_client.call(first_challenge_set_mode) && first_challenge_set_mode.response.mode_sent) {
@@ -301,15 +336,22 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 			}
 		}
 
-		pose_x = current_pose.pose.position.x;
-		pose_y = current_pose.pose.position.y;
-		if (navigation.update(pose_x, pose_y, elapsedTime)) {
-			pose.pose.position.x = pose_x;
-			pose.pose.position.y = pose_y;
+		pose_x = current_pose.pose.position.x / X_SCALE + X_OFFSET;
+		pose_y = current_pose.pose.position.y / Y_SCALE + Y_OFFSET;		
+		spaceState.updateSpace(pose_x, pose_y);	
+		if (waypoint.moveToWaypoint(pose_x, pose_y, elapsedTime)) {
+			pose.pose.position.x = pose_x - X_OFFSET;
+			pose.pose.position.y = pose_y - Y_OFFSET;
+			pose.pose.position.x = X_SCALE * (pose_x - X_OFFSET);
+			pose.pose.position.y = Y_SCALE * (pose_y - Y_OFFSET);			
+			std::cout << "moveTo: (" << pose.pose.position.x / X_SCALE + X_OFFSET;
+			std::cout << ", " << pose.pose.position.y / Y_SCALE + Y_OFFSET;
+			std::cout << ", " << pose.pose.position.z << ")" << std::endl;
 			elapsedTime = 0;
 		} else {
 			++elapsedTime;
 		}
+		spaceState.displaySpace();
 		//processImage(frame);
 		//soothsayer.findTags(frame);
 		isPoseAcquired = false;
@@ -334,25 +376,6 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg) {
 void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) {
 	current_pose = *msg;
 	isPoseAcquired = true;
-}
-
-void apriltag_cb(const apriltag_ros::AprilTagDetectionArray::ConstPtr& msg) {
-	current_tag = *msg;
-	if (!isSearchComplete) {
-		if (!current_tag.detections.empty()) {
-			for (int i = 0; i < current_tag.detections.size(); i++) {
-				if (!current_tag.detections[i].id.empty()) {
-					for (int j = 0; j < current_tag.detections[i].id.size(); j++) {
-						if (navigation.reportedTags.addTag(current_tag.detections[i].id[j], current_pose.pose.position.x, current_pose.pose.position.y)) {
-							std::cout << "Found tag " << current_tag.detections[i].id[j] << std::endl;
-						}					
-					}
-				}
-			}		
-		}
-		isSearchComplete = navigation.reportedTags.isComplete();
-	}
-
 }
 
 void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {

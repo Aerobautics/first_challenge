@@ -11,10 +11,14 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+const int FRAME_DELAY = 792;
+const double MINIMUM_AREA = 500;
 enum class ImageProcessor { CONTOUR, TRACKING };
+enum class DisplayMode { NONE, STANDARD_OUTPUT, IMAGE };
 static const std::string PROCESSING_WINDOW_NAME = "Image Processing";
 void displayProcessing(const std::string windowName, cv::Mat input);
 void displayProcessing(cv::Mat input);
+void sightseeing_test_function_01(std::vector<cv::Point2f> query, std::vector<cv::Point2f> train);
 
 class Sightseeing {
 	public:
@@ -30,7 +34,10 @@ class Sightseeing {
 		void setProcessingType(ImageProcessor input);
 		ImageProcessor getProcessingType();
 		std::vector<int> getImageSize();
-		void trackingPrototype(cv::Mat inputQuery, cv::Mat inputFrame); // Output relevant data when complete
+		cv::Mat trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame);
+		cv::Mat contourFunction(cv::Mat input, double minimumArea, DisplayMode showStats = DisplayMode::NONE);
+		cv::Mat contourFunction(cv::Mat input, double minimumArea, std::vector<cv::Scalar> colors, DisplayMode showStats = DisplayMode::NONE);
+		std::vector<std::vector<cv::Point>> findContours(cv::Mat input, double minimumArea);
 
 	private:
 		cv::Mat currentImage;

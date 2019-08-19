@@ -6,8 +6,6 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-
-
 cv::Mat processImage(cv::Mat input) {
 	cv::Mat grayscale;
 	cv::Mat positive, negative;

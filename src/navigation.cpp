@@ -3,14 +3,26 @@
  * Author: Stewart Nash (Aerobotics)
  * Date: May 31, 2019
  * Version: 0.0.0
- * Description: This class contains the navigation functions of 
- * for the drone. This includes the pathfinding and space searching
- * functions that were previoulsy included in 'spacestate' and
- * 'searchspace'.
+ * Description:	This class contains the navigation functions of 
+ *				for the drone. This includes the pathfinding and space searching
+ *				functions that were previoulsy included in 'spacestate' and
+ *				'searchspace'.
  */
 #include "navigation.h"
 #include "cellconversion.h"
 #include <iostream>
+
+std::vector<double> navigationGetPoints(int wallNumber, double resolution) {
+	return getPoints(wallNumber, resolution);
+}
+
+std::vector<double> navigationGetPoints(int wallNumber) {
+	return getPoints(wallNumber);
+}
+
+std::vector<int> navigationGetCells() {
+	return getCells();
+}
 
 Navigation::Navigation() {
 	xOffset = 10;
@@ -41,7 +53,8 @@ Navigation::Navigation(double poseX, double poseY, double offsetX, double offset
 	spaceState.initializeSpace(xPose + xOffset, yPose + yOffset);	
 }
 
-
+// Return point that drone should move to given elapsed time and current position
+// @return value indicates whther the drone should move or not
 bool Navigation::update(double& poseX, double& poseY, unsigned long elapsedTime) {
 	bool output;
 	double xPosition, yPosition;
@@ -52,6 +65,8 @@ bool Navigation::update(double& poseX, double& poseY, unsigned long elapsedTime)
 	return update(poseX, poseY, xPosition, yPosition, elapsedTime);
 }
 
+// Reference returns point that drone should move to given elapsed time and current position
+// @return value indicates whether the drone should move or not
 bool Navigation::update(double& poseX, double& poseY, double xPosition, double yPosition, unsigned long elapsedTime) {
 	bool output;
 

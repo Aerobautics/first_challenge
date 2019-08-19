@@ -9,6 +9,7 @@
  */
 #pragma once
 #include <vector>
+#include "foundtag.h"
 
 class Reporter {
 	public:
@@ -16,15 +17,16 @@ class Reporter {
 		bool isComplete();
 		bool addTag(unsigned int input);
 		bool addTag(unsigned int input, double coordinateX, double coordinateY);
-		std::vector<unsigned int> getTags();
-		std::vector<double> getXCoordinates();
-		std::vector<double> getYCoordinates();
+		bool addTag(unsigned int input, double coordinateX, double coordinateY, double tagArea);
+		bool addTag(FoundTag input);
+		//bool addFoundTag(FoundTag input);
+		std::vector<FoundTag> getTags();
+		std::vector<FoundTag> getTagList();
 		void resetTags();
 		const int MAXIMUM_TAGS = 6;
 
 	private:
-		std::vector<unsigned int> tagList;
-		std::vector<double> xCoordinates;
-		std::vector<double> yCoordinates;
+		std::vector<FoundTag> foundTags;
+		std::vector<FoundTag> tagList;
 };
 
