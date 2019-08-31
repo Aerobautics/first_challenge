@@ -28,7 +28,6 @@
 #include "navigation.h"
 #include "spacestate.h"
 #include "waypoint.h"
-#include "sightseeing.h"
 
 // Remove the following variables
 // Found in cellconversion.h
@@ -50,26 +49,21 @@ static const int Y_OFFSET = -9;
 static const double X_SCALE = 1.00;
 static const double Y_SCALE = 1.00;
 
-static const bool SAVE_VIDEO = false;
-
 int video_width = HD_WIDTH;
 int video_height = HD_HEIGHT;
-bool isVideoInitialized = false;
-
-enum ImageState {NONE_FOUND, OBSERVE, TARGET, FORCE_OFF};
-bool isTargeting = false;
-bool isObserving = false;
 
 mavros_msgs::State current_state;
 geometry_msgs::PoseStamped current_pose;
-bool isPoseAcquired;
-
 
 cv::Mat frame;
 cv::VideoWriter video;
 
-Controller::Controller() {
+bool Controller::isVideoInitialized;
+bool Controller::isPoseAcquired;
+Sightseeing* Controller::sightseeingPointer;
 
+Controller::Controller() {
+	isVideoInitialized = false;
 }
 
 void Controller::searchNavigation(int argc, char *argv[]) {
@@ -80,6 +74,7 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
 
+	sightseeingPointer = &soothsayer;	
 	ros::Subscriber state_sub = nodeHandle.subscribe<mavros_msgs::State>("/mavros/state", 10, &state_cb);
 	ros::Subscriber local_pos_sub = nodeHandle.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, &local_pos_cb);
 	ros::Publisher local_pos_pub = nodeHandle.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
@@ -125,19 +120,24 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 	//	return -1;
 	//}
 
-	cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);
-	cv::resizeWindow("Search Space", SD_WIDTH, SD_HEIGHT);
-	//cv::resizeWindow(PROCESSING_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	//cv::resizeWindow(SEARCH_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-
-	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
-	std::cout << current_pose.pose.position.y << ")" << std::endl;
+	if (DISPLAY_BOTTOM) {
+		cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
+		cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);		
+	}
+	if (DISPLAY_FRONT) {
+		cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
+		cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);		
+	}
+	if (DISPLAY_SEARCH) {
+		cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
+		//cv::resizeWindow(SEARCH_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
+		cv::resizeWindow("Search Space", SD_WIDTH, SD_HEIGHT);		
+	}
+	
+	if (DISPLAY_COORDINATES) {
+		std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
+		std::cout << current_pose.pose.position.y << ")" << std::endl;		
+	}
 	/*
 	pose.pose.position.x = current_pose.pose.position.x; // 0?
 	pose.pose.position.y = current_pose.pose.position.y; // 0?
@@ -194,7 +194,6 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 				last_request = ros::Time::now();
 			}
 		}
-
 		++elapsedTime;
 		pose_x = current_pose.pose.position.x + X_OFFSET;
 		pose_y = current_pose.pose.position.y + Y_OFFSET;		
@@ -202,9 +201,11 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 		if (spaceState.moveTo(pose_x, pose_y, elapsedTime)) {
 			pose.pose.position.x = pose_x - X_OFFSET;
 			pose.pose.position.y = pose_y - Y_OFFSET;
-			std::cout << "moveTo: (" << pose.pose.position.x + X_OFFSET;
-			std::cout << ", " << pose.pose.position.y + Y_OFFSET;
-			std::cout << ", " << pose.pose.position.z << ")" << std::endl;
+			if (DISPLAY_COORDINATES) {
+				std::cout << "moveTo: (" << pose.pose.position.x + X_OFFSET;
+				std::cout << ", " << pose.pose.position.y + Y_OFFSET;
+				std::cout << ", " << pose.pose.position.z << ")" << std::endl;				
+			}
 			elapsedTime = 0;
 		} else {
 
@@ -222,10 +223,18 @@ void Controller::searchNavigation(int argc, char *argv[]) {
 		rate.sleep();
 	}
 
-	cv::destroyWindow("Image Processing");
-	cv::destroyWindow("Search Space");
-	//cv::destroyWindow(PROCESSING_WINDOW_NAME);
-	//cv::destroyWindow(SEARCH_WINDOW_NAME);
+	
+	if (DISPLAY_BOTTOM) {
+		cv::destroyWindow(BOTTOM_WINDOW_NAME);
+	}
+	if (DISPLAY_FRONT) {
+		cv::destroyWindow(FRONT_WINDOW_NAME);		
+	}
+	if (DISPLAY_SEARCH) {
+		//cv::destroyWindow(SEARCH_WINDOW_NAME);
+		cv::destroyWindow("Search Space");
+	}		
+
 	if (SAVE_VIDEO) {
 		video.release();
 	}
@@ -239,6 +248,7 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 	ros::init(argc, argv, "first_challenge_node");
 	ros::NodeHandle nodeHandle;
 
+	sightseeingPointer = &soothsayer;
 	ros::Subscriber state_sub = nodeHandle.subscribe<mavros_msgs::State>("/mavros/state", 10, &state_cb);
 	ros::Subscriber local_pos_sub = nodeHandle.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, &local_pos_cb);
 	ros::Publisher local_pos_pub = nodeHandle.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
@@ -276,17 +286,19 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 
 	}
 
-	//cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::namedWindow(SEARCH_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
-	//cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	//cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
-	//cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);
-	cv::resizeWindow("Search Space", SD_WIDTH, SD_HEIGHT);
+	if (DISPLAY_BOTTOM) {
+		cv::namedWindow(BOTTOM_WINDOW_NAME, cv::WINDOW_NORMAL);
+		cv::resizeWindow(BOTTOM_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);		
+	}
+	if (DISPLAY_FRONT) {
+		cv::namedWindow(FRONT_WINDOW_NAME, cv::WINDOW_NORMAL);
+		cv::resizeWindow(FRONT_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);		
+	}
 
-	std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
-	std::cout << current_pose.pose.position.y << ")" << std::endl;
+	if (DISPLAY_COORDINATES) {
+		std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
+		std::cout << current_pose.pose.position.y << ")" << std::endl;		
+	}
 
 	pose.pose.position.x = 0; // 0?
 	pose.pose.position.y = 0; // 0?
@@ -343,15 +355,17 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 			pose.pose.position.x = pose_x - X_OFFSET;
 			pose.pose.position.y = pose_y - Y_OFFSET;
 			pose.pose.position.x = X_SCALE * (pose_x - X_OFFSET);
-			pose.pose.position.y = Y_SCALE * (pose_y - Y_OFFSET);			
-			std::cout << "moveTo: (" << pose.pose.position.x / X_SCALE + X_OFFSET;
-			std::cout << ", " << pose.pose.position.y / Y_SCALE + Y_OFFSET;
-			std::cout << ", " << pose.pose.position.z << ")" << std::endl;
+			pose.pose.position.y = Y_SCALE * (pose_y - Y_OFFSET);
+			if (DISPLAY_COORDINATES) {
+				std::cout << "moveTo: (" << pose.pose.position.x / X_SCALE + X_OFFSET;
+				std::cout << ", " << pose.pose.position.y / Y_SCALE + Y_OFFSET;
+				std::cout << ", " << pose.pose.position.z << ")" << std::endl;				
+			}
 			elapsedTime = 0;
 		} else {
 			++elapsedTime;
 		}
-		spaceState.displaySpace();
+		//spaceState.displaySpace();
 		//processImage(frame);
 		//soothsayer.findTags(frame);
 		isPoseAcquired = false;
@@ -361,25 +375,181 @@ void Controller::waypointNavigation(int argc, char *argv[]) {
 		rate.sleep();
 	}
 
-	//cv::destroyWindow("Image Processing");
-	cv::destroyWindow("Search Space");
+	if (DISPLAY_BOTTOM) {
+		cv::destroyWindow(BOTTOM_WINDOW_NAME);
+	}
+	if (DISPLAY_FRONT) {
+		cv::destroyWindow(FRONT_WINDOW_NAME);
+	}
 
 	if (SAVE_VIDEO) {
 		video.release();
 	}
 }
 
-void state_cb(const mavros_msgs::State::ConstPtr& msg) {
+void Controller::testNavigation(int argc, char *argv[]) {
+	Waypoint waypoint;
+	SpaceState spaceState;
+	Sightseeing soothsayer;
+	isPoseAcquired = false;
+	ros::init(argc, argv, "first_challenge_node");
+	ros::NodeHandle nodeHandle;
+
+	sightseeingPointer = &soothsayer;
+	ros::Subscriber state_sub = nodeHandle.subscribe<mavros_msgs::State>("/mavros/state", 10, &state_cb);
+	ros::Subscriber local_pos_sub = nodeHandle.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, &local_pos_cb);
+	ros::Publisher local_pos_pub = nodeHandle.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+	ros::ServiceClient arming_client = nodeHandle.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
+	ros::ServiceClient set_mode_client = nodeHandle.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+
+	image_transport::ImageTransport bottomImageTransport(nodeHandle);
+	image_transport::ImageTransport frontImageTransport(nodeHandle);
+	image_transport::Subscriber bottomImageSubscriber;
+	image_transport::Subscriber frontImageSubscriber;
+	image_transport::Publisher imagePublisher;
+	
+	cv::Mat temporary;
+	cv::Mat queryImage;
+	
+	temporary = cv::imread(QUERY_PATH);
+	cv::cvtColor(temporary, queryImage, cv::COLOR_BGR2GRAY);
+	soothsayer.setQueryImage(queryImage);
+
+	bottomImageSubscriber = bottomImageTransport.subscribe("/iris_1/camera_down/image_raw", 1, &bottomImageCallback);
+	frontImageSubscriber = frontImageTransport.subscribe("/iris_1/camera_forward/image_raw", 1, &frontImageCallback);
+
+	cv::VideoCapture capture;
+	
+	geometry_msgs::PoseStamped pose;
+
+	double pose_x, pose_y;
+	double desired_x, desired_y;	
+	unsigned long elapsedTime = 0;
+
+	// The setpoint publishing rate MUST be faster than 2Hz
+	ros::Rate rate(20.0);
+	
+	// Wait for FCU connection
+	while(ros::ok() && !current_state.connected){
+		ros::spinOnce();
+		rate.sleep();
+	}
+	// PX4 Pro Flight Stack operates in aerospacee NED coordinate frame
+	// MAVROS translates to standard ENU frame
+	while (!isPoseAcquired) {
+
+	}
+	
+	if (DISPLAY_PROCESSING) {
+		cv::namedWindow(PROCESSING_WINDOW_NAME, cv::WINDOW_NORMAL);
+		//cv::resizeWindow(PROCESSING_WINDOW_NAME, SD_WIDTH, SD_HEIGHT);
+		cv::resizeWindow("Image Processing", SD_WIDTH, SD_HEIGHT);		
+	}
+
+	if (DISPLAY_COORDINATES) {
+		std::cout << "Starting position (" << current_pose.pose.position.x << ", ";
+		std::cout << current_pose.pose.position.y << ")" << std::endl;		
+	}
+
+	pose.pose.position.x = 0; // 0?
+	pose.pose.position.y = 0; // 0?
+	pose.pose.position.z = 2; // 2?
+	pose.pose.orientation.x = 0; // 0?
+	pose.pose.orientation.y = 0; // 0?
+	pose.pose.orientation.z = -0.99; // -0.99?
+	pose.pose.orientation.w = -0.04; // -0.04?
+	pose.pose.position.z = 2;		
+	// Send a few setpoints before starting
+	for(int i = 100; ros::ok() && i > 0; --i){
+		local_pos_pub.publish(pose);
+		ros::spinOnce();
+		rate.sleep();
+	}
+	// Initialize spacestate values -> move this to header
+	for (int i = 0; i < NUMBER_OF_WALLS_STATIC; i++) {
+		forbiddenPoints[i] = navigationGetPoints(i);
+	}
+	spaceState.initializeSpace(pose.pose.position.x / X_SCALE + X_OFFSET, pose.pose.position.y / Y_SCALE + Y_OFFSET);
+
+	// Set custom mode to OFFBOARD
+	mavros_msgs::SetMode first_challenge_set_mode;
+	first_challenge_set_mode.request.custom_mode = "OFFBOARD";
+	// Switch to Offboard mode, arm quadcopter, send service calls every 5 seconds
+	mavros_msgs::CommandBool arm_cmd;
+	arm_cmd.request.value = true;
+
+	ros::Time last_request = ros::Time::now();
+
+	if (SAVE_VIDEO) {
+		video = cv::VideoWriter("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, cv::Size(video_width, video_height));
+	}
+ 
+	while(ros::ok()){
+		if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))) {
+			if( set_mode_client.call(first_challenge_set_mode) && first_challenge_set_mode.response.mode_sent) {
+				ROS_INFO("Offboard enabled");
+			}
+			last_request = ros::Time::now();
+		} else {
+			if( !current_state.armed && (ros::Time::now() - last_request > ros::Duration(5.0))) {
+				if( arming_client.call(arm_cmd) && arm_cmd.response.success) {
+					ROS_INFO("Vehicle armed");
+				}
+				last_request = ros::Time::now();
+			}
+		}
+
+		pose_x = current_pose.pose.position.x / X_SCALE + X_OFFSET;
+		pose_y = current_pose.pose.position.y / Y_SCALE + Y_OFFSET;		
+		spaceState.updateSpace(pose_x, pose_y);	
+		if (waypoint.moveToWaypoint(pose_x, pose_y, elapsedTime)) {
+			pose.pose.position.x = pose_x - X_OFFSET;
+			pose.pose.position.y = pose_y - Y_OFFSET;
+			pose.pose.position.x = X_SCALE * (pose_x - X_OFFSET);
+			pose.pose.position.y = Y_SCALE * (pose_y - Y_OFFSET);
+			if (DISPLAY_COORDINATES) {
+				std::cout << "moveTo: (" << pose.pose.position.x / X_SCALE + X_OFFSET;
+				std::cout << ", " << pose.pose.position.y / Y_SCALE + Y_OFFSET;
+				std::cout << ", " << pose.pose.position.z << ")" << std::endl;				
+			}
+			elapsedTime = 0;
+		} else {
+			++elapsedTime;
+		}
+		if (DISPLAY_SEARCH) {
+			spaceState.displaySpace();			
+		}
+		//processImage(frame);
+		//soothsayer.findTags(frame);
+		isPoseAcquired = false;
+
+		local_pos_pub.publish(pose);
+		ros::spinOnce();
+		rate.sleep();
+	}
+
+	if (DISPLAY_PROCESSING) {
+		//cv::destroyWindow(PROCESSING_WINDOW_NAME);
+		cv::destroyWindow("Image Processing");	
+	}
+
+	if (SAVE_VIDEO) {
+		video.release();
+	}
+}
+
+void Controller::state_cb(const mavros_msgs::State::ConstPtr& msg) {
 	current_state = *msg;
 }
 
-void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) {
+void Controller::local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) {
 	current_pose = *msg;
 	isPoseAcquired = true;
 }
 
-void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
+void Controller::bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	cv_bridge::CvImagePtr cvImagePtr;
+	cv::Mat processingFrame;
 
 	try {
 		cvImagePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
@@ -387,7 +557,24 @@ void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		ROS_ERROR("cv_bridge exception: %s", e.what());
 		return;
 	}
-	cv::imshow(BOTTOM_WINDOW_NAME, cvImagePtr->image);
+	if (DISPLAY_BOTTOM) {
+		cv::imshow(BOTTOM_WINDOW_NAME, cvImagePtr->image);		
+	}
+	if (DISPLAY_PROCESSING) {
+		if (sightseeingPointer != nullptr) {
+			cv::cvtColor(cvImagePtr->image, processingFrame, cv::COLOR_BGR2GRAY);
+			sightseeingPointer->defaultProcessing(processingFrame);
+			if (sightseeingPointer->getIsOutputImageCurrent()) {
+				cv::imshow(PROCESSING_WINDOW_NAME, sightseeingPointer->getOutputImage());
+			} else {
+			
+			}
+		} else {
+			
+		}
+	} else {
+		
+	}
 	cvImagePtr->image.copyTo(frame);
 	if (!isVideoInitialized) {
 		cv::Size frameSize = frame.size();
@@ -402,7 +589,7 @@ void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	cv::waitKey(3);
 }
 
-void frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
+void Controller::frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	cv_bridge::CvImagePtr cvImagePtr;
 
 	try {
@@ -411,7 +598,9 @@ void frontImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 		ROS_ERROR("cv_bridge exception: %s", e.what());
 		return;
 	}
-	//cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);
+	if (DISPLAY_FRONT) {
+		cv::imshow(FRONT_WINDOW_NAME, cvImagePtr->image);		
+	}
 	cv::waitKey(3);
 }
 

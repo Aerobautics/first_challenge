@@ -20,7 +20,7 @@ std::vector<double> navigationGetPoints(int wallNumber, double resolution);
 std::vector<double> navigationGetPoints(int wallNumber);
 std::vector<int> navigationGetCells();
 
-enum NavigationMethod {WAYPOINT_NAVIGATION, SEARCH_NAVIGATION};
+enum NavigationMethod {WAYPOINT_NAVIGATION, SEARCH_NAVIGATION, TEST_NAVIGATION};
 
 class Navigation {
 	public:
@@ -44,7 +44,6 @@ class Navigation {
 
 	private:
 		SpaceState spaceState;
-		Waypoint waypoint;
-		
+		Waypoint waypoint;		
 };
 

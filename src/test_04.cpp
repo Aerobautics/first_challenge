@@ -1,8 +1,8 @@
 /*
  * Author: Aerobotics (Stewart Nash)
- * File: first_challenge_integrated.cpp
- * Description: Node for first drone challenge with integrated
- * computer vision and movement functions.
+ * File: test_04.cpp
+ * Description: Contains testing and debugging functions for
+ * image processing.
  */
 #include <opencv2\opencv.hpp>
 #include "sightseeing.h"
@@ -31,6 +31,7 @@ cv::Mat test_function_12(cv::Mat input, double minimumArea, DisplayMode showStat
 cv::Mat test_function_12(cv::Mat input, double minimumArea, std::vector<cv::Scalar> colors, DisplayMode showStats = DisplayMode::NONE); // Contour finding calling #13
 std::vector<std::vector<cv::Point>> test_function_13(cv::Mat input, double minimumArea); // Return contours with minimum area
 
+/*
 int main(int argc, char* argv[])
 {
 	int output;
@@ -42,6 +43,7 @@ int main(int argc, char* argv[])
 	system("pause");
 	return output;
 }
+*/
 
 int test_function_3() {
 	Sightseeing soothsayer;

@@ -14,7 +14,12 @@
 #include <iostream>
 
 Sightseeing::Sightseeing() {
-	processingType = ImageProcessor::CONTOUR;
+	processingType = ImageProcessor::TRACKING;
+	isCurrentImageSet = false;
+	isQueryImageSet = false;
+	isOutputImageCurrent = false;
+	isOutputProcessingCurrent = false;
+	isUsingOutputImage = true;
 }
 
 std::vector<double> Sightseeing::findTags(cv::Mat input) {
@@ -44,6 +49,10 @@ std::vector<double> Sightseeing::findTags() {
 std::vector<double> Sightseeing::contourProcessing(cv::Mat input) {
 	std::vector<double> output;
 
+	outputImage = contourFunction(input, MINIMUM_AREA);
+	isOutputImageCurrent = true;
+	output = outputProcessing;
+
 	return output;
 }
 
@@ -54,11 +63,31 @@ std::vector<double> Sightseeing::contourProcessing() {
 std::vector<double> Sightseeing::trackerProcessing(cv::Mat input) {
 	std::vector<double> output;
 
+	if (isQueryImageSet) {
+		trackingFunction(queryImage, input);
+	} else {
+		std::cout << "ERROR [std::vector<double> Sightseeing::trackerProcessing(cv::Mat input)]: query image has not been set.";
+	}
+	output = outputProcessing;
+
 	return output;
 }
 
 std::vector<double> Sightseeing::trackerProcessing() {
 	return trackerProcessing(currentImage);
+}
+
+std::vector<double> Sightseeing::defaultProcessing(cv::Mat input) {
+	std::vector<double> output;
+	
+	if (processingType == ImageProcessor::CONTOUR) {
+		contourProcessing(input);
+	} else if (processingType == ImageProcessor::TRACKING) {
+		trackerProcessing(input);
+	}
+	output = outputProcessing;
+	
+	return output;
 }
 
 void Sightseeing::setCurrentImage(cv::Mat input) {
@@ -86,7 +115,7 @@ std::vector<int> Sightseeing::getImageSize() {
 
 cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame) {
 	cv::Mat output;
-	cv::Mat queryImage;
+	cv::Mat queryImageLocal;
 	cv::Mat queryFrame;
 	cv::Ptr<cv::Feature2D> orbDetector;
 	std::vector<cv::KeyPoint> keypoints_1, keypoints_2;
@@ -97,19 +126,48 @@ cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame) {
 	int goodMatchNumber;
 	std::vector<cv::Point2f> points_1, points_2;
 
+	//std::cout << "[INFO cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame)]:";
+	//std::cout << std::endl;
+	//std::cout << "inputQuery.type():\t" << inputQuery.type() << std::endl;
+	//std::cout << "inputFrame.type():\t" << inputFrame.type() << std::endl;
+	//std::cout << "inputQuery.cols:\t" << inputQuery.cols << std::endl;
+	//std::cout << "inputFrame.cols:\t" << inputFrame.cols << std::endl;
+	//std::cout << "(CV_32F = 5, CV_8U = 0)" << std::endl;
+
 	//cv::cvtColor(inputQuery, queryImage, cv::COLOR_BGR2GRAY);
 	//cv::cvtColor(inputFrame, queryFrame, cv::COLOR_BGR2GRAY);
-	queryImage = inputQuery;
+
+	//if (inputQuery.cols == inputFrame.cols) {
+	//	queryImageLocal = inputQuery;
+	//} else {
+	//	queryImageLocal = matchImages(inputQuery, inputFrame);
+	//}
+
+	queryImageLocal = inputQuery;
 	queryFrame = inputFrame;
 	// Initiate ORB detector
 	orbDetector = cv::ORB::create();
 
 	// Detect ORB features and compute descriptors
-	orbDetector->detectAndCompute(queryImage, cv::Mat(), keypoints_1, descriptors_1);
+	orbDetector->detectAndCompute(queryImageLocal, cv::Mat(), keypoints_1, descriptors_1);
 	orbDetector->detectAndCompute(queryFrame, cv::Mat(), keypoints_2, descriptors_2);
 
 	// Create BFMatcher object
 	bruteforceMatcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
+
+	std::cout << "[INFO cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame)]:";
+	std::cout << std::endl;
+	std::cout << "descriptors_1.type():\t" << descriptors_1.type() << std::endl;
+	std::cout << "descriptors_2.type():\t" << descriptors_2.type() << std::endl;
+	std::cout << "descriptors_1.cols:\t" << descriptors_1.cols << std::endl;
+	std::cout << "descriptors_2.cols:\t" << descriptors_2.cols << std::endl;
+	std::cout << "(CV_32F = 5, CV_8U = 0)" << std::endl;
+
+	if (descriptors_1.cols != descriptors_2.cols) {
+		std::cout << "[ERROR cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame)]: Descriptor columns do not match.";
+		std::cout << std::endl;
+		return output;
+	}
 
 	// Match descriptors or features
 	bruteforceMatcher->match(descriptors_1, descriptors_2, matches, cv::Mat());
@@ -127,7 +185,9 @@ cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame) {
 		points_2.push_back(keypoints_2[matches[i].trainIdx].pt);
 	}
 
-	cv::drawMatches(queryImage, keypoints_1, queryFrame, keypoints_2, matches, output);
+	cv::drawMatches(queryImageLocal, keypoints_1, queryFrame, keypoints_2, matches, output);
+	outputImage = output;
+	isOutputImageCurrent = true;
 	desouza::test_function_01(points_1, points_2);
 
 	return output;
@@ -206,6 +266,8 @@ cv::Mat Sightseeing::contourFunction(cv::Mat input, double minimumArea, std::vec
 		//cv::drawContours(output, contours, j, cv::Scalar(0, 0, 255), 2, 8);
 		cv::drawContours(output, contours, j, color, 2, 8);
 		cv::circle(output, cv::Point(centroidX, centroidY), 4, color, -1);
+		outputProcessing = output;
+		isOutputImageCurrent = true;
 		if (showStats == DisplayMode::STANDARD_OUTPUT) {
 			std::cout << "Contour " << j << "(moment area, contour area, contour length): (";
 			std::cout << momentArea << ", " << contourArea << ", " << contourLength << ")";
@@ -273,6 +335,55 @@ std::vector<std::vector<cv::Point>> Sightseeing::findContours(cv::Mat input, dou
 	}
 
 	return output;
+}
+
+cv::Mat Sightseeing::getOutputImage() {
+	if (isOutputImageCurrent) {
+		return outputImage;
+	} else {
+		std::cout << "ERROR [cv::Mat Sightseeing::getOutputImage()]: Output image is not currently set.";
+	}
+
+	return cv::Mat();
+}
+
+std::vector<double> Sightseeing::getOutputProcessing() {
+	if (isOutputProcessingCurrent) {
+		return outputProcessing;
+	} else {
+		std::cout << "ERROR [std::vector<double> Sightseeing::getOutputProcessing()]: Output processing is not current.";
+	}
+
+	return std::vector<double>();
+}
+
+cv::Mat Sightseeing::matchImages(cv::Mat input, cv::Mat reference) {
+	cv::Mat output;
+	double aspectRatio;
+	int numberOfRows;
+	int numberOfColumns;
+	double temporary;
+
+	aspectRatio = static_cast<double>(input.rows) / static_cast<double>(input.cols);
+	numberOfColumns = reference.cols;
+	numberOfRows = numberOfColumns * aspectRatio;
+	// Round to nearest integer without using cmath library
+	temporary = static_cast<double>(numberOfColumns) * aspectRatio;
+	if ((static_cast<double>(numberOfRows) + 0.5) < temporary) {
+		++numberOfRows;
+	}
+	cv::resize(input, output, cv::Size(numberOfColumns, numberOfRows), 0, 0);
+
+	return output;
+}
+
+void Sightseeing::setQueryImage(cv::Mat input) {
+	queryImage = input;
+	isQueryImageSet = true;
+}
+
+bool Sightseeing::getIsOutputImageCurrent() {
+	return isOutputImageCurrent;
 }
 
 // Display methods previously in "processing.h"

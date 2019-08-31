@@ -13,19 +13,40 @@
 #include <mavros_msgs/State.h>
 #include <sensor_msgs/Image.h>
 
+#include "sightseeing.h"
+
 extern cv::Mat frame;
 extern cv::VideoWriter video;
-
-void state_cb(const mavros_msgs::State::ConstPtr& msg);
-void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg);
-void frontImageCallback(const sensor_msgs::ImageConstPtr& msg);
 void saveVideo(cv::VideoWriter& output, cv::Mat& input);
+
+static const bool SAVE_VIDEO = false;
+
+static const bool DISPLAY_BOTTOM = false;
+static const bool DISPLAY_FRONT = false;
+static const bool DISPLAY_PROCESSING = true;
+static const bool DISPLAY_SEARCH = false;
+
+static const bool DISPLAY_COORDINATES = false;
+
+static const std::string QUERY_PATH = "/home/stewart/ai_battle_drone/src/first_challenge/src/apriltag.jpg";
 
 class Controller {
 	public:
 		Controller(); // Constructor
 		void searchNavigation(int argc, char *argv[]);
 		void waypointNavigation(int argc, char *argv[]);
+		void testNavigation(int argc, char *argv[]);
+		
+	private:
+		// TODO: The following members should not be static.
+		// TODO: The callback functions should be unlinked from these members.
+		static Sightseeing* sightseeingPointer;
+		static bool isPoseAcquired;
+		static bool isVideoInitialized;
+
+		static void state_cb(const mavros_msgs::State::ConstPtr& msg);
+		static void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+		static void bottomImageCallback(const sensor_msgs::ImageConstPtr& msg);
+		static void frontImageCallback(const sensor_msgs::ImageConstPtr& msg);
 };
 

@@ -29,6 +29,7 @@ class Sightseeing {
 		std::vector<double> contourProcessing();
 		std::vector<double> trackerProcessing(cv::Mat input);
 		std::vector<double> trackerProcessing();
+		std::vector<double> defaultProcessing(cv::Mat input);
 		void setCurrentImage(cv::Mat input);
 		cv::Mat getCurrentImage();
 		void setProcessingType(ImageProcessor input);
@@ -38,9 +39,23 @@ class Sightseeing {
 		cv::Mat contourFunction(cv::Mat input, double minimumArea, DisplayMode showStats = DisplayMode::NONE);
 		cv::Mat contourFunction(cv::Mat input, double minimumArea, std::vector<cv::Scalar> colors, DisplayMode showStats = DisplayMode::NONE);
 		std::vector<std::vector<cv::Point>> findContours(cv::Mat input, double minimumArea);
+		cv::Mat getOutputImage();
+		std::vector<double> getOutputProcessing();
+		cv::Mat matchImages(cv::Mat input, cv::Mat reference);
+		void setQueryImage(cv::Mat input);
+		bool getIsOutputImageCurrent();
 
 	private:
+		bool isCurrentImageSet;
+		bool isQueryImageSet;
+		bool isOutputImageCurrent;
+		bool isOutputProcessingCurrent;
+		bool isUsingOutputImage;
 		cv::Mat currentImage;
+		cv::Mat queryImage;
+		cv::Mat outputImage;
+		std::vector<double> outputProcessing;
 		ImageProcessor processingType;
+		
 };
 
