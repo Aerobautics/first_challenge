@@ -24,6 +24,7 @@ int test_function_14() {
 	Sightseeing soothsayer;
 	Sightseeing *sightseeingPointer;
 	//Sightseeing &sightseeingReference = soothsayer;
+	std::vector<double> results;
 	
 	cv::Mat frame;
 	cv::Mat apriltagQuery;
@@ -45,7 +46,7 @@ int test_function_14() {
 	sightseeingPointer = &soothsayer;
 	//sightseeingReference = soothsayer;
 	soothsayer.setQueryImage(apriltagQuery);
-	//soothsayer.setProcessingType(ImageProcessor::CONTOUR);
+	soothsayer.setProcessingType(ImageProcessor::CONTOUR);
 	cv::namedWindow("test_function_6", cv::WINDOW_AUTOSIZE);
 	cv::VideoCapture videoCapture;
 	videoCapture.open(apriltagFramePath);
@@ -58,6 +59,14 @@ int test_function_14() {
 			temporary = sightseeingPointer->getOutputImage();
 			cv::imshow("test_function_6", sightseeingPointer->getOutputImage());
 			//cv::imshow("test_function_6", sightseeingReference.getOutputImage());
+			if (sightseeingPointer->getIsOutputProcessingCurrent()) {
+				results = sightseeingPointer->getOutputProcessing();
+				for (int i = 0; i < results.size() / 2; i += 2) {
+					std::cout << "Results " << i / 2 << ": (";
+					std::cout << results[i] << ", " << results[i + 1];
+					std::cout << ")" << std::endl;
+				}
+			}
 		} else {
 
 		}

@@ -38,12 +38,13 @@ class Sightseeing {
 		cv::Mat trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame);
 		cv::Mat contourFunction(cv::Mat input, double minimumArea, DisplayMode showStats = DisplayMode::NONE);
 		cv::Mat contourFunction(cv::Mat input, double minimumArea, std::vector<cv::Scalar> colors, DisplayMode showStats = DisplayMode::NONE);
+		cv::Mat contourFunctionGray(cv::Mat input, double minimumArea, std::vector<cv::Scalar> colors, DisplayMode showStats = DisplayMode::NONE);
 		std::vector<std::vector<cv::Point>> findContours(cv::Mat input, double minimumArea);
 		cv::Mat getOutputImage();
 		std::vector<double> getOutputProcessing();
 		cv::Mat matchImages(cv::Mat input, cv::Mat reference);
 		void setQueryImage(cv::Mat input);
-		bool getIsOutputImageCurrent();
+		bool getIsOutputProcessingCurrent();
 
 	private:
 		bool isCurrentImageSet;

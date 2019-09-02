@@ -60,10 +60,12 @@ cv::VideoWriter video;
 
 bool Controller::isVideoInitialized;
 bool Controller::isPoseAcquired;
+int Controller::processDecimator;
 Sightseeing* Controller::sightseeingPointer;
 
 Controller::Controller() {
 	isVideoInitialized = false;
+	processDecimator = 0;
 }
 
 void Controller::searchNavigation(int argc, char *argv[]) {
@@ -411,6 +413,7 @@ void Controller::testNavigation(int argc, char *argv[]) {
 	cv::Mat temporary;
 	cv::Mat queryImage;
 	
+	soothsayer.setProcessingType(ImageProcessor::CONTOUR);
 	temporary = cv::imread(QUERY_PATH);
 	cv::cvtColor(temporary, queryImage, cv::COLOR_BGR2GRAY);
 	soothsayer.setQueryImage(queryImage);
@@ -562,16 +565,17 @@ void Controller::bottomImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 	}
 	if (DISPLAY_PROCESSING) {
 		if (sightseeingPointer != nullptr) {
-			cv::cvtColor(cvImagePtr->image, processingFrame, cv::COLOR_BGR2GRAY);
-			sightseeingPointer->defaultProcessing(processingFrame);
-			if (sightseeingPointer->getIsOutputImageCurrent()) {
-				cv::imshow(PROCESSING_WINDOW_NAME, sightseeingPointer->getOutputImage());
+			if (processDecimator % PROCESS_DECIMATION == 0) {
+				cv::cvtColor(cvImagePtr->image, processingFrame, cv::COLOR_BGR2GRAY);
+				sightseeingPointer->defaultProcessing(processingFrame);
+				cv::imshow(PROCESSING_WINDOW_NAME, sightseeingPointer->getOutputImage());			
 			} else {
-			
+					
 			}
 		} else {
 			
 		}
+		++processDecimator;
 	} else {
 		
 	}

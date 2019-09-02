@@ -27,7 +27,7 @@ static const bool DISPLAY_PROCESSING = true;
 static const bool DISPLAY_SEARCH = false;
 
 static const bool DISPLAY_COORDINATES = false;
-
+static const int PROCESS_DECIMATION = 1; // This is the interval to wait for processing data
 static const std::string QUERY_PATH = "/home/stewart/ai_battle_drone/src/first_challenge/src/apriltag.jpg";
 
 class Controller {
@@ -43,6 +43,7 @@ class Controller {
 		static Sightseeing* sightseeingPointer;
 		static bool isPoseAcquired;
 		static bool isVideoInitialized;
+		static int processDecimator;
 
 		static void state_cb(const mavros_msgs::State::ConstPtr& msg);
 		static void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);

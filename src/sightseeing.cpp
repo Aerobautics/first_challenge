@@ -155,17 +155,20 @@ cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame) {
 	// Create BFMatcher object
 	bruteforceMatcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
 
-	std::cout << "[INFO cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame)]:";
-	std::cout << std::endl;
-	std::cout << "descriptors_1.type():\t" << descriptors_1.type() << std::endl;
-	std::cout << "descriptors_2.type():\t" << descriptors_2.type() << std::endl;
-	std::cout << "descriptors_1.cols:\t" << descriptors_1.cols << std::endl;
-	std::cout << "descriptors_2.cols:\t" << descriptors_2.cols << std::endl;
-	std::cout << "(CV_32F = 5, CV_8U = 0)" << std::endl;
+	//std::cout << "[INFO cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame)]:";
+	//std::cout << std::endl;
+	//std::cout << "descriptors_1.type():\t" << descriptors_1.type() << std::endl;
+	//std::cout << "descriptors_2.type():\t" << descriptors_2.type() << std::endl;
+	//std::cout << "descriptors_1.cols:\t" << descriptors_1.cols << std::endl;
+	//std::cout << "descriptors_2.cols:\t" << descriptors_2.cols << std::endl;
+	//std::cout << "(CV_32F = 5, CV_8U = 0)" << std::endl;
 
 	if (descriptors_1.cols != descriptors_2.cols) {
 		std::cout << "[ERROR cv::Mat Sightseeing::trackingFunction(cv::Mat inputQuery, cv::Mat inputFrame)]: Descriptor columns do not match.";
 		std::cout << std::endl;
+		output = queryFrame;
+		outputImage = output;
+		isOutputImageCurrent = true;
 		return output;
 	}
 
@@ -246,6 +249,78 @@ cv::Mat Sightseeing::contourFunction(cv::Mat input, double minimumArea, std::vec
 	const int VERTICAL_TEXT_OFFSET = 20;
 	const int HORIZONTAL_TEXT_OFFSET = 20;
 
+	// Process information and obtain results
+	std::vector<double> results;
+
+	uniqueColors = colors.size();
+	cv::cvtColor(input, output, cv::COLOR_GRAY2BGR);
+	verticalLocation = VERTICAL_TEXT_OFFSET;
+	contours = findContours(input, minimumArea);
+	for (int i = 0; i < contours.size(); i++) {
+		indices.push_back(i);
+		moments.push_back(cv::moments(contours[i], true));
+	}
+	for (int i = 0; i < (int)indices.size(); i++) {
+		int j = indices[i];
+		momentArea = moments[j].m00;
+		contourArea = cv::contourArea(contours[j]);
+		contourLength = cv::arcLength(contours[j], true);
+		centroidX = moments[j].m10 / momentArea;
+		centroidY = moments[j].m01 / momentArea;
+		results.push_back(centroidX);
+		results.push_back(centroidY);
+		//cv::Scalar color = cv::Scalar(randomNumber.uniform(0, 255), randomNumber.uniform(0, 255), randomNumber.uniform(0, 255));
+		cv::Scalar color = colors[i % uniqueColors];
+		//cv::drawContours(output, contours, j, cv::Scalar(0, 0, 255), 2, 8);
+		cv::drawContours(output, contours, j, color, 2, 8);
+		cv::circle(output, cv::Point(centroidX, centroidY), 4, color, -1);
+		if (showStats == DisplayMode::STANDARD_OUTPUT) {
+			std::cout << "Contour " << j << "(moment area, contour area, contour length): (";
+			std::cout << momentArea << ", " << contourArea << ", " << contourLength << ")";
+			std::cout << std::endl;
+			std::cout << "Contour " << j << "(centroid x, centroid y): (";
+			std::cout << centroidX << ", " << centroidY << ")" << std::endl;
+		} else if (showStats == DisplayMode::IMAGE) {
+			stats.clear();
+			stat = "Contour " + std::to_string(j) + "(moment area, contour area, contour length): ";
+			stats.push_back(stat);
+			stat = "(" + std::to_string(momentArea) + ", " + std::to_string(contourArea) + ", " + std::to_string(contourLength) + ")";
+			stats.push_back(stat);
+			stat = "Contour " + std::to_string(j) + "(centroid x, centroid y): ";
+			stats.push_back(stat);
+			stat = "(" + std::to_string(centroidX) + ", " + std::to_string(centroidY) + ")";
+			stats.push_back(stat);
+			for (int i = 0; i < stats.size(); i++) {
+				cv::putText(output, stats[i], cv::Point(HORIZONTAL_TEXT_OFFSET, verticalLocation), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.6, cv::Scalar(200, 200, 200));
+				verticalLocation += VERTICAL_TEXT_OFFSET;
+			}
+		}
+	}
+	outputProcessing = results;
+	isOutputProcessingCurrent = true;
+
+	return output;
+}
+
+cv::Mat Sightseeing::contourFunctionGray(cv::Mat input, double minimumArea, std::vector<cv::Scalar> colors, DisplayMode showStats) {
+	cv::Mat output;
+	cv::Mat temporary;
+	std::vector<std::vector<cv::Point>> contours;
+	std::vector<cv::Moments> moments;
+	std::vector<int> indices;
+	std::vector<std::string> stats;
+	std::string stat;
+	int verticalLocation;
+	int uniqueColors;
+	double momentArea;
+	double contourArea, contourLength;
+	double centroidX, centroidY;
+	const int VERTICAL_TEXT_OFFSET = 20;
+	const int HORIZONTAL_TEXT_OFFSET = 20;
+
+	// Process information and obtain results
+	std::vector<double> results;
+
 	uniqueColors = colors.size();
 	output = input;
 	verticalLocation = VERTICAL_TEXT_OFFSET;
@@ -266,7 +341,7 @@ cv::Mat Sightseeing::contourFunction(cv::Mat input, double minimumArea, std::vec
 		//cv::drawContours(output, contours, j, cv::Scalar(0, 0, 255), 2, 8);
 		cv::drawContours(output, contours, j, color, 2, 8);
 		cv::circle(output, cv::Point(centroidX, centroidY), 4, color, -1);
-		outputProcessing = output;
+		outputProcessing = results;
 		isOutputImageCurrent = true;
 		if (showStats == DisplayMode::STANDARD_OUTPUT) {
 			std::cout << "Contour " << j << "(moment area, contour area, contour length): (";
@@ -317,6 +392,7 @@ std::vector<std::vector<cv::Point>> Sightseeing::findContours(cv::Mat input, dou
 	cv::add(positive, negative, combination);
 	//cv::dilate(combination, combination, cv::Mat(), cv::Point(-1, -1), 2);
 	cv::dilate(combination, combination, cv::Mat());
+	
 	cv::findContours(combination, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 	for (int i = 0; i < contours.size(); i++) {
 		indices.push_back(i);
@@ -382,8 +458,8 @@ void Sightseeing::setQueryImage(cv::Mat input) {
 	isQueryImageSet = true;
 }
 
-bool Sightseeing::getIsOutputImageCurrent() {
-	return isOutputImageCurrent;
+bool Sightseeing::getIsOutputProcessingCurrent() {
+	return isOutputProcessingCurrent;
 }
 
 // Display methods previously in "processing.h"
